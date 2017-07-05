@@ -19,6 +19,16 @@ Madgwick filter;
 unsigned long microsPerReading, microsPrevious;
 float accelScale, gyroScale;
 
+// BUTTON
+// set pin numbers:
+const int buttonPin = 2;     // the number of the pushbutton pin
+const int ledPin =  13;      // the number of the LED pin
+
+int buttonState = 0;         // variable for reading the pushbutton status
+
+// BASELINE
+const int readyPin = 3;
+
 // SETUP
 void setup() {
   Serial.begin(9600);
@@ -37,46 +47,64 @@ void setup() {
   // initialize variables to pace updates to correct rate
   microsPerReading = 1000000 / 25;
   microsPrevious = micros();
+
+  // initialize the LED pin as an output:
+  pinMode(ledPin, OUTPUT);
+  // initialize the pushbutton pin as an input:
+  pinMode(buttonPin, INPUT);
 }
 
 void loop() {
-  int aix, aiy, aiz;
-  int gix, giy, giz;
-  float ax, ay, az;
-  float gx, gy, gz;
-  float doorAngle;
-  int ping_1, ping_2;
-  unsigned long microsNow;
+  // read the state of the pushbutton value:
+  buttonState = digitalRead(buttonPin);
 
-  // check if it's time to read data and update the filter
-  microsNow = micros();
-  if (microsNow - microsPrevious >= microsPerReading) {
-
-    // read raw data from CurieIMU
-    CurieIMU.readMotionSensor(aix, aiy, aiz, gix, giy, giz);
-
-    // convert from raw data to gravity and degrees/second units
-    ax = convertRawAcceleration(aix);
-    ay = convertRawAcceleration(aiy);
-    az = convertRawAcceleration(aiz);
-    gx = convertRawGyro(gix);
-    gy = convertRawGyro(giy);
-    gz = convertRawGyro(giz);
-
-    // update the filter, which computes orientation
-    filter.updateIMU(gx, gy, gz, ax, ay, az);
-
-    // print the heading, pitch and roll
-    doorAngle = filter.getYaw();
-    Serial.print("Door Angle: ");
-    Serial.println(doorAngle);
-
-    ping_1 = sonar_1.ping_cm();
-    ping_2 = sonar_2.ping_cm();
-    printpings(ping_1, ping_2);
-
-    // increment previous time, so we keep proper pace
-    microsPrevious = microsPrevious + microsPerReading;
+  // check if the pushbutton is pressed.
+  // if it is, the buttonState is HIGH:
+  if (buttonState == HIGH) {
+    // turn LED on:
+    digitalWrite(ledPin, HIGH);
+    digitalWrite(readyPin, HIGH);
+  } else {
+    // turn LED off:
+    digitalWrite(ledPin, LOW);
+    int aix, aiy, aiz;
+    int gix, giy, giz;
+    float ax, ay, az;
+    float gx, gy, gz;
+    float doorAngle;
+    int ping_1, ping_2;
+    unsigned long microsNow;
+  
+    // check if it's time to read data and update the filter
+    microsNow = micros();
+    if (microsNow - microsPrevious >= microsPerReading) {
+  
+      // read raw data from CurieIMU
+      CurieIMU.readMotionSensor(aix, aiy, aiz, gix, giy, giz);
+  
+      // convert from raw data to gravity and degrees/second units
+      ax = convertRawAcceleration(aix);
+      ay = convertRawAcceleration(aiy);
+      az = convertRawAcceleration(aiz);
+      gx = convertRawGyro(gix);
+      gy = convertRawGyro(giy);
+      gz = convertRawGyro(giz);
+  
+      // update the filter, which computes orientation
+      filter.updateIMU(gx, gy, gz, ax, ay, az);
+  
+      // print the heading, pitch and roll
+      doorAngle = filter.getYaw();
+      Serial.print("Door Angle: ");
+      Serial.println(doorAngle);
+  
+      ping_1 = sonar_1.ping_cm();
+      ping_2 = sonar_2.ping_cm();
+      printpings(ping_1, ping_2);
+  
+      // increment previous time, so we keep proper pace
+      microsPrevious = microsPrevious + microsPerReading;
+    }
   }
 }
 
