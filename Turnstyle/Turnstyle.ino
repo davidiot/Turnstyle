@@ -13,6 +13,10 @@
 #define DETECTION_THRESH 50 // Distance cutoff for passing
 #define MAX_DISTANCE 200 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
 
+// USE THIS INSTEAD TO REVERSE THE DOOR DIRECTION
+// NewPing sonar_1(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE); // NewPing setup of closer sensor.
+// NewPing sonar_2(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE); // NewPing setup of farther sensor.
+
 NewPing sonar_1(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE); // NewPing setup of closer sensor.
 NewPing sonar_2(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE); // NewPing setup of farther sensor.
 
@@ -25,7 +29,7 @@ unsigned long microsPerReading, microsPrevious, microsBetweenReads, microsLastRe
 float accelScale, gyroScale;
 
 // THRESHOLDS
-const int thresh = 60;       // < 60 cm to sensor is considered passing through.
+const int thresh = 25;       // < 60 cm to sensor is considered passing through.
 const float openAngle = 20;  // door is considered open at 20 degrees.
 boolean doorOpen = false;
 
