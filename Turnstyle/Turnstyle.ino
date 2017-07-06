@@ -13,26 +13,28 @@
 #define DETECTION_THRESH 50 // Distance cutoff for passing
 #define MAX_DISTANCE 200 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
 
-NewPing sonar_1(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
-NewPing sonar_2(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
+NewPing sonar_1(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE); // NewPing setup of closer sensor.
+NewPing sonar_2(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE); // NewPing setup of farther sensor.
 
 // RGB
 rgb_lcd lcd;
 
 // MADGEWICK
 Madgwick filter;
-unsigned long microsPerReading, microsPrevious;
+unsigned long microsPerReading, microsPrevious, microsBetweenReads, microsLastRead;
 float accelScale, gyroScale;
 
 // THRESHOLDS
 const int thresh = 60;       // < 60 cm to sensor is considered passing through.
-const float openAngle = 10;  // door is considered open at 10 degrees.
+const float openAngle = 20;  // door is considered open at 20 degrees.
+boolean doorOpen = false;
 
 // INDICATOR
 const int ledPin =  13;      // the number of the LED pin
 
 // POPULATION
 int population = 0;
+unsigned long closeTrigger = 0, farTrigger = 0;
 
 // SETUP
 void setup() {
@@ -57,6 +59,8 @@ void setup() {
   // initialize variables to pace updates to correct rate
   microsPerReading = 1000000 / 25;
   microsPrevious = micros();
+  microsBetweenReads = 1000000 / 2; // must wait half a second between consecutive reads
+  microsLastRead = micros();
 
   // get initial angle of the door
   // startAngle = measureYaw();
@@ -76,9 +80,37 @@ void loop() {
     float difference = measureYaw() - 180;
     doorAngle = abs(difference);
 
-    ping_1 = sonar_1.ping_cm();
-    ping_2 = sonar_2.ping_cm();
-    printinfo(doorAngle, ping_1, ping_2);
+    if (doorAngle < openAngle) {
+      closeDoor();
+      Serial.println("Door not open");
+    } else if (microsNow - microsLastRead < microsBetweenReads) {
+      Serial.println("Movement Detected");
+    } else {
+      openDoor();
+      ping_1 = sonar_1.ping_cm();
+      ping_2 = sonar_2.ping_cm();
+  
+      if (detect(ping_2)) {
+        if (closeTrigger > 0) {
+          incrementPopulation();
+        } else if (!detect(ping_1)) {
+          farTrigger = microsNow;
+        }
+      } else if (detect(ping_1)) {
+        if (farTrigger > 0) {
+          decrementPopulation();
+        } else if (!detect(ping_2)) {
+          closeTrigger = microsNow;
+        }
+      } else {
+        if (farTrigger > 0 && microsNow - farTrigger > 2 * microsBetweenReads) {
+          farTrigger = 0;
+        } else if (closeTrigger > 0 && microsNow - closeTrigger > 2 * microsBetweenReads) {
+          closeTrigger = 0;
+        }
+      }
+      printinfo(doorAngle, ping_1, ping_2);
+    }
 
     // increment previous time, so we keep proper pace
     microsPrevious = microsPrevious + microsPerReading;
@@ -107,6 +139,46 @@ float measureYaw() {
   return filter.getYaw();
 }
 
+void incrementPopulation() {
+  population++;
+  updatePopulationAndMoveCursor();
+  lcd.write("Welcome!        ");
+}
+
+void decrementPopulation() {
+  if (population > 0) {
+    population--;
+  }
+  updatePopulationAndMoveCursor();
+  lcd.write("Have a nice day!");
+}
+
+void openDoor() {
+  if (!doorOpen) {
+    lcd.setRGB(0, 255, 0);
+    doorOpen = true;
+  }
+}
+
+void closeDoor() {
+  if (doorOpen) {
+    lcd.setRGB(255, 255, 255);
+    doorOpen = false;
+  }
+}
+
+// Update population and move cursor to where the message will be written
+void updatePopulationAndMoveCursor() {
+  lcd.setCursor(12, 0);
+  lcd.write("    ");
+  lcd.setCursor(12, 0);
+  lcd.print(population);
+  lcd.setCursor(0, 1);
+  farTrigger = 0;
+  closeTrigger = 0;
+  microsLastRead = micros();
+}
+
 float convertRawAcceleration(int aRaw) {
   // since we are using 2G range
   // -2g maps to a raw value of -32768
@@ -123,6 +195,10 @@ float convertRawGyro(int gRaw) {
   
   float g = (gRaw * 250.0) / 32768.0;
   return g;
+}
+
+boolean detect(int pingValue) {
+  return pingValue < thresh && pingValue > 0;
 }
 
 void printinfo(float doorAngle, int ping_1, int ping_2) {
