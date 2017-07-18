@@ -4,41 +4,40 @@
 #include <Wire.h>
 #include "rgb_lcd.h"
 
-// ULTRASONIC
-#define TRIGGER_PIN_1  12  // Arduino pin tied to trigger pin on the ultrasonic sensor.
-#define ECHO_PIN_1     11  // Arduino pin tied to echo pin on the ultrasonic sensor.
-#define TRIGGER_PIN_2  10  // Arduino pin tied to trigger pin on the ultrasonic sensor.
-#define ECHO_PIN_2     9  // Arduino pin tied to echo pin on the ultrasonic sensor.
+// parameters indicated with a * should be tuned to fit the door.
 
-#define DETECTION_THRESH 50 // Distance cutoff for passing
-#define MAX_DISTANCE 200 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
+// ULTRASONIC
+#define TRIGGER_PIN_1  12  // Arduino pin tied to trigger pin on the first ultrasonic sensor.
+#define ECHO_PIN_1     11  // Arduino pin tied to echo pin on the first ultrasonic sensor.
+#define TRIGGER_PIN_2  10  // Arduino pin tied to trigger pin on the second ultrasonic sensor.
+#define ECHO_PIN_2     9  // Arduino pin tied to echo pin on the second ultrasonic sensor.
+
+#define DETECTION_THRESH 25 // Distance cutoff for passing (< DETECTION_THRESH is considered to be a person in proximity)
+#define OPEN_ANGLE 20       // Angle where door is considered open
+#define MAX_DISTANCE 200    // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
+boolean doorOpen = false;   // is the door open?
 
 // USE THIS INSTEAD TO REVERSE THE DOOR DIRECTION
-// NewPing sonar_1(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE); // NewPing setup of closer sensor.
-// NewPing sonar_2(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE); // NewPing setup of farther sensor.
-
-NewPing sonar_1(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE); // NewPing setup of closer sensor.
-NewPing sonar_2(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE); // NewPing setup of farther sensor.
+// NewPing sonar_1(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE);  // NewPing setup of closer sensor.
+// NewPing sonar_2(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE);  // NewPing setup of farther sensor.
+NewPing sonar_1(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE);     // NewPing setup of closer sensor.
+NewPing sonar_2(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE);     // NewPing setup of farther sensor.
 
 // RGB
 rgb_lcd lcd;
 
 // MADGEWICK
+// see https://www.arduino.cc/en/Tutorial/Genuino101CurieIMUOrientationVisualiser
 Madgwick filter;
 unsigned long microsPerReading, microsPrevious, microsBetweenReads, microsLastRead;
 float accelScale, gyroScale;
 
-// THRESHOLDS
-const int thresh = 25;       // < 60 cm to sensor is considered passing through.
-const float openAngle = 20;  // door is considered open at 20 degrees.
-boolean doorOpen = false;
-
 // INDICATOR
-const int ledPin =  13;      // the number of the LED pin
+const int ledPin =  13;      // the number of the on-board LED in the Arduino 101
 
 // POPULATION
-int population = 0;
-unsigned long closeTrigger = 0, farTrigger = 0;
+int population = 0;          // current population of the room
+unsigned long closeLastTime = 0, farLastTime = 0; // The last times a person was detected at the close and far sensors, respectively.  Note that 0 means the last detection never happened or happened too long ago.
 
 // SETUP
 void setup() {
@@ -61,16 +60,18 @@ void setup() {
   CurieIMU.setGyroRange(250);
 
   // initialize variables to pace updates to correct rate
-  microsPerReading = 1000000 / 25;
-  microsPrevious = micros();
-  microsBetweenReads = 1000000 / 2; // must wait half a second between consecutive reads
-  microsLastRead = micros();
+  microsPerReading = 1000000 / 25;      // deals with pacing from the tutorial code
+  microsPrevious = micros();            // deals with pacing from the tutorial code
+  microsBetweenReads = 1000000 / 2;     // must wait half a second between consecutive reads
+  microsLastRead = micros();            // time since last movement detected
 
+  // NOTE: the initial angle of the door is always 180 degrees, so this commented code is not necessary for now.
   // get initial angle of the door
   // startAngle = measureYaw();
-  
+
+  // Indicate that setup is complete
   pinMode(ledPin, OUTPUT);
-  digitalWrite(ledPin, HIGH);  // Indicate that setup is complete
+  digitalWrite(ledPin, HIGH);
 }
 
 void loop() {
@@ -80,37 +81,38 @@ void loop() {
 
   // check if it's time to read data and update the filter
   microsNow = micros();
-  if (microsNow - microsPrevious >= microsPerReading) {
-    float difference = measureYaw() - 180;
-    doorAngle = abs(difference);
+  if (microsNow - microsPrevious >= microsPerReading) { // This condition is taken from the tutorial code -- it ensures updates happen at the right time
+    float difference = measureYaw() - 180; // Normalize the measurement so that it starts from 0, since the initial angle is 180
+    doorAngle = abs(difference); // Note that the abs function cannot have other operations inside of it.  This is apparently a problem with Arduino.  This line and the previous one have to be two separate operations, or this will bug up.
 
-    if (doorAngle < openAngle) {
+    if (doorAngle < OPEN_ANGLE) { // Door is closed
       closeDoor();
       Serial.println("Door not open");
-    } else if (microsNow - microsLastRead < microsBetweenReads) {
+    } else if (microsNow - microsLastRead < microsBetweenReads) { // Door is open, a movement was recently detected, and we are waiting between movements; do not double count or re-record the last passing time because the person may still be passing through.
       Serial.println("Movement Detected");
-    } else {
+    } else { // Door is open, but a complete movement has not been discovered recently.
       openDoor();
       ping_1 = sonar_1.ping_cm();
       ping_2 = sonar_2.ping_cm();
-  
+
+      // This block and the next have similar logic.  When we detect a ping, we adjust population and reset the latest detection times if the other sensor's last detection time is recent.  Otherwise, we update the current sensor's last detection.
       if (detect(ping_2)) {
-        if (closeTrigger > 0) {
+        if (closeLastTime > 0) {
           incrementPopulation();
         } else if (!detect(ping_1)) {
-          farTrigger = microsNow;
+          farLastTime = microsNow;
         }
       } else if (detect(ping_1)) {
-        if (farTrigger > 0) {
+        if (farLastTime > 0) {
           decrementPopulation();
         } else if (!detect(ping_2)) {
-          closeTrigger = microsNow;
+          closeLastTime = microsNow;
         }
-      } else {
-        if (farTrigger > 0 && microsNow - farTrigger > 2 * microsBetweenReads) {
-          farTrigger = 0;
-        } else if (closeTrigger > 0 && microsNow - closeTrigger > 2 * microsBetweenReads) {
-          closeTrigger = 0;
+      } else { // if a significant amount of time has passed (defined as 2 * microsBetweenReads), then reset the last detection times.  This is to prevent detections from a long time ago priming the detector when it doesn't make sense.
+        if (farLastTime > 0 && microsNow - farLastTime > 2 * microsBetweenReads) {
+          farLastTime = 0;
+        } else if (closeLastTime > 0 && microsNow - closeLastTime > 2 * microsBetweenReads) {
+          closeLastTime = 0;
         }
       }
       printinfo(doorAngle, ping_1, ping_2);
@@ -121,7 +123,7 @@ void loop() {
   }
 }
 
-float measureYaw() {
+float measureYaw() { // from the tutorial -- don't worry too much about this.
   int aix, aiy, aiz;
   int gix, giy, giz;
   float ax, ay, az;
@@ -150,21 +152,21 @@ void incrementPopulation() {
 }
 
 void decrementPopulation() {
-  if (population > 0) {
+  if (population > 0) { // whoops
     population--;
   }
   updatePopulationAndMoveCursor();
   lcd.write("Have a nice day!");
 }
 
-void openDoor() {
+void openDoor() { // only open the door if it wasn't already opened
   if (!doorOpen) {
     lcd.setRGB(0, 255, 0);
     doorOpen = true;
   }
 }
 
-void closeDoor() {
+void closeDoor() { // only close the door if it wasn't already closed.
   if (doorOpen) {
     lcd.setRGB(255, 255, 255);
     doorOpen = false;
@@ -178,11 +180,12 @@ void updatePopulationAndMoveCursor() {
   lcd.setCursor(12, 0);
   lcd.print(population);
   lcd.setCursor(0, 1);
-  farTrigger = 0;
-  closeTrigger = 0;
+  farLastTime = 0;
+  closeLastTime = 0;
   microsLastRead = micros();
 }
 
+// from tutorial
 float convertRawAcceleration(int aRaw) {
   // since we are using 2G range
   // -2g maps to a raw value of -32768
@@ -192,6 +195,7 @@ float convertRawAcceleration(int aRaw) {
   return a;
 }
 
+// from tutorial
 float convertRawGyro(int gRaw) {
   // since we are using 250 degrees/seconds range
   // -250 maps to a raw value of -32768
@@ -201,8 +205,9 @@ float convertRawGyro(int gRaw) {
   return g;
 }
 
+// did we get a detection?  boolean logic goes here to avoid doing >0 checks (which indicate that the ping was too far away)
 boolean detect(int pingValue) {
-  return pingValue < thresh && pingValue > 0;
+  return pingValue < DETECTION_THRESH && pingValue > 0;
 }
 
 void printinfo(float doorAngle, int ping_1, int ping_2) {
