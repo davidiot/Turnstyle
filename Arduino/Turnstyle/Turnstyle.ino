@@ -39,6 +39,9 @@ const int ledPin =  13;      // the number of the on-board LED in the Arduino 10
 int population = 0;          // current population of the room
 unsigned long closeLastTime = 0, farLastTime = 0; // The last times a person was detected at the close and far sensors, respectively.  Note that 0 means the last detection never happened or happened too long ago.
 
+// FOR DEBUGGING -- SET TO FALSE TO USE WITH NODE SERVER
+boolean debug = true;
+
 // SETUP
 void setup() {
   Serial.begin(9600);
@@ -87,9 +90,9 @@ void loop() {
 
     if (doorAngle < OPEN_ANGLE) { // Door is closed
       closeDoor();
-      Serial.println("Door not open");
+      printIfDebug("Door not open");
     } else if (microsNow - microsLastRead < microsBetweenReads) { // Door is open, a movement was recently detected, and we are waiting between movements; do not double count or re-record the last passing time because the person may still be passing through.
-      Serial.println("Movement Detected");
+      printIfDebug("Movement Detected");
     } else { // Door is open, but a complete movement has not been discovered recently.
       openDoor();
       ping_1 = sonar_1.ping_cm();
@@ -180,6 +183,16 @@ void updatePopulationAndMoveCursor() {
   lcd.setCursor(12, 0);
   lcd.print(population);
   lcd.setCursor(0, 1);
+  
+  if (debug) {
+    Serial.print("Population: ");
+  }
+  Serial.print(population);
+  if (!debug) {
+    Serial.println("*");
+  } else {
+    Serial.println();
+  }
   farLastTime = 0;
   closeLastTime = 0;
   microsLastRead = micros();
@@ -211,11 +224,19 @@ boolean detect(int pingValue) {
 }
 
 void printinfo(float doorAngle, int ping_1, int ping_2) {
-  Serial.print("Door Angle: ");
-  Serial.print(doorAngle);
-  Serial.print(" | Ping 1: ");
-  Serial.print(ping_1); // Send ping, get distance in cm and print result (0 = outside set distance range)
-  Serial.print(" cm | Ping 2: ");
-  Serial.print(ping_2); // Send ping, get distance in cm and print result (0 = outside set distance range)
-  Serial.println(" cm");
+  if (debug) {
+    Serial.print("Door Angle: ");
+    Serial.print(doorAngle);
+    Serial.print(" | Ping 1: ");
+    Serial.print(ping_1); // Send ping, get distance in cm and print result (0 = outside set distance range)
+    Serial.print(" cm | Ping 2: ");
+    Serial.print(ping_2); // Send ping, get distance in cm and print result (0 = outside set distance range)
+    Serial.println(" cm");
+  }
+}
+
+void printIfDebug(String message) {
+  if (debug) {
+    Serial.println(message);
+  }
 }
