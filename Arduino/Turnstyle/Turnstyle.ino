@@ -2,15 +2,17 @@
 #include <MadgwickAHRS.h>
 #include <NewPing.h>
 #include <Wire.h>
-#include "rgb_lcd.h"
+#include <Adafruit_RGBLCDShield.h>
+
 
 // parameters indicated with a * should be tuned to fit the door.
 
-// ULTRASONIC
+// ULTRASONIC -- settings match for blackboard-hardware V1.0
 #define TRIGGER_PIN_1  12  // Arduino pin tied to trigger pin on the first ultrasonic sensor.
 #define ECHO_PIN_1     11  // Arduino pin tied to echo pin on the first ultrasonic sensor.
 #define TRIGGER_PIN_2  10  // Arduino pin tied to trigger pin on the second ultrasonic sensor.
-#define ECHO_PIN_2     9  // Arduino pin tied to echo pin on the second ultrasonic sensor.
+#define ECHO_PIN_2     9   // Arduino pin tied to echo pin on the second ultrasonic sensor.
+#define SWITCH_PIN     A2  // Arduino pin tied to magnetic contact switch lead
 
 #define DETECTION_THRESH 25 // Distance cutoff for passing (< DETECTION_THRESH is considered to be a person in proximity)
 #define OPEN_ANGLE 20       // Angle where door is considered open
@@ -23,14 +25,20 @@ boolean doorOpen = false;   // is the door open?
 NewPing sonar_1(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE);     // NewPing setup of closer sensor.
 NewPing sonar_2(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE);     // NewPing setup of farther sensor.
 
-// RGB
-rgb_lcd lcd;
+// RGB_LCD from Adafruit
+Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
 
 // MADGEWICK
 // see https://www.arduino.cc/en/Tutorial/Genuino101CurieIMUOrientationVisualiser
 Madgwick filter;
 unsigned long microsPerReading, microsPrevious, microsBetweenReads, microsLastRead;
 float accelScale, gyroScale;
+
+// MAGNETIC SWITCH BOOLEAN AND BASELINE CALIBRATION FOR IMU
+boolean isMagSwitchOpen = false;                     // true/false about the state of the door according to the magnetic contact switch 
+boolean isMagSwitchClosed = true;                    // false/true redundant compliment for readbility
+boolean readyToBeOpened = true;                      // hysteresis/state change memory from closed to open for calibration
+float baselineYaw;                                   // global variable declaration of the baseline Yaw was the only way to get it to exist outside of consecutive loops-- otherwise it gets erased
 
 // INDICATOR
 const int ledPin =  13;      // the number of the on-board LED in the Arduino 101
@@ -48,8 +56,11 @@ void setup() {
 
   // configure LCD
   lcd.begin(16, 2);
-  lcd.setRGB(255, 255, 255);
+  lcd.setBacklight(0x7);    // sets backlight to brightest setting (white)
   lcd.print("Population: 0   ");
+
+  // establish pinMode for magnetic contact switch
+  pinMode(SWITCH_PIN, INPUT); // if analogRead pulls high, then switch is closed. else, door is open.
 
   // start the IMU and filter
   CurieIMU.begin();
@@ -84,16 +95,36 @@ void loop() {
 
   // check if it's time to read data and update the filter
   microsNow = micros();
-  if (microsNow - microsPrevious >= microsPerReading) { // This condition is taken from the tutorial code -- it ensures updates happen at the right time
-    float difference = measureYaw() - 180; // Normalize the measurement so that it starts from 0, since the initial angle is 180
-    doorAngle = abs(difference); // Note that the abs function cannot have other operations inside of it.  This is apparently a problem with Arduino.  This line and the previous one have to be two separate operations, or this will bug up.
+  if (microsNow - microsPrevious >= microsPerReading) { // This condition is taken from the tutorial code -- it ensures updates happen at the right time --??? is this for IMU delay
+    
+    // Checks the magnetic switch
+    if (analogRead(SWITCH_PIN) > 800) {            // can tune threshold depending on circuit. currently closed switch = (analogRead output > 800)
+      isMagSwitchOpen   = false;                   // switch is CLOSED, NOT open
+      isMagSwitchClosed = true;
+    }  else if (analogRead(SWITCH_PIN) < 800) {
+      isMagSwitchOpen   = true;                    // switch is OPEN, NOT closed
+      isMagSwitchClosed = false;
+    }
 
-    if (doorAngle < OPEN_ANGLE) { // Door is closed
+    if (isMagSwitchClosed) { // Door is closed
       closeDoor();
       printIfDebug("Door not open");
-    } else if (microsNow - microsLastRead < microsBetweenReads) { // Door is open, a movement was recently detected, and we are waiting between movements; do not double count or re-record the last passing time because the person may still be passing through.
+      readyToBeOpened = true;
+      
+    } else if ((microsNow - microsLastRead < microsBetweenReads) and isMagSwitchOpen) { // Door is open, a movement was recently detected, and we are waiting between movements; do not double count or re-record the last passing time because the person may still be passing through.
       printIfDebug("Movement Detected");
-    } else { // Door is open, but a complete movement has not been discovered recently.
+      
+    } else if (isMagSwitchOpen) { // Door is open, but a complete movement has not been discovered recently.
+      if (readyToBeOpened) {
+        baselineYaw = measureYaw();
+        readyToBeOpened = false;
+      }
+      float currentYaw = measureYaw();
+      float absDifference = abs(currentYaw - baselineYaw);
+      // for now... i will fix with better logic later... probably account for directionality using a similar button system
+      doorAngle=absDifference;      
+
+      
       openDoor();
       ping_1 = sonar_1.ping_cm();
       ping_2 = sonar_2.ping_cm();
@@ -151,7 +182,8 @@ float measureYaw() { // from the tutorial -- don't worry too much about this.
 void incrementPopulation() {
   population++;
   updatePopulationAndMoveCursor();
-  lcd.write("Welcome!        ");
+  lcd.setCursor(0, 1);
+  lcd.print("Welcome!        ");
 }
 
 void decrementPopulation() {
@@ -159,19 +191,24 @@ void decrementPopulation() {
     population--;
   }
   updatePopulationAndMoveCursor();
-  lcd.write("Have a nice day!");
+  lcd.setCursor(0, 1);
+  lcd.print("Have a nice day!");
 }
 
 void openDoor() { // only open the door if it wasn't already opened
   if (!doorOpen) {
-    lcd.setRGB(0, 255, 0);
+    lcd.setBacklight(0x7); // white backlight
+    lcd.setCursor(0, 1);
+    lcd.println("open              ");
     doorOpen = true;
   }
 }
 
 void closeDoor() { // only close the door if it wasn't already closed.
   if (doorOpen) {
-    lcd.setRGB(255, 255, 255);
+    lcd.setBacklight(0x7); // dark backlight
+    lcd.setCursor(0, 1);
+    lcd.println("closed              ");
     doorOpen = false;
   }
 }
@@ -179,11 +216,11 @@ void closeDoor() { // only close the door if it wasn't already closed.
 // Update population and move cursor to where the message will be written
 void updatePopulationAndMoveCursor() {
   lcd.setCursor(12, 0);
-  lcd.write("    ");
+  lcd.print("    ");
   lcd.setCursor(12, 0);
   lcd.print(population);
   lcd.setCursor(0, 1);
-  
+
   if (debug) {
     Serial.print("Population: ");
   }
@@ -203,7 +240,7 @@ float convertRawAcceleration(int aRaw) {
   // since we are using 2G range
   // -2g maps to a raw value of -32768
   // +2g maps to a raw value of 32767
-  
+
   float a = (aRaw * 2.0) / 32768.0;
   return a;
 }
@@ -213,7 +250,7 @@ float convertRawGyro(int gRaw) {
   // since we are using 250 degrees/seconds range
   // -250 maps to a raw value of -32768
   // +250 maps to a raw value of 32767
-  
+
   float g = (gRaw * 250.0) / 32768.0;
   return g;
 }
