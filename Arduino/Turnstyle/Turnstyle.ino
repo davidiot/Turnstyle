@@ -4,8 +4,7 @@
 #include <Wire.h>
 #include <Adafruit_RGBLCDShield.h>
 
-
-// parameters indicated with a * should be tuned to fit the door.
+// parameters indicated with a *** should be tuned to fit the door.
 
 // ULTRASONIC -- settings match for blackboard-hardware V1.0
 #define TRIGGER_PIN_1  12  // Arduino pin tied to trigger pin on the first ultrasonic sensor.
@@ -14,16 +13,15 @@
 #define ECHO_PIN_2     9   // Arduino pin tied to echo pin on the second ultrasonic sensor.
 #define SWITCH_PIN     A2  // Arduino pin tied to magnetic contact switch lead
 
-#define DETECTION_THRESH 25 // Distance cutoff for passing (< DETECTION_THRESH is considered to be a person in proximity)
-#define OPEN_ANGLE 20       // Angle where door is considered open
+#define DETECTION_THRESH 25 // Distance cutoff for passing (< DETECTION_THRESH is considered to be a person in proximity)***
+#define OPEN_ANGLE 20       // Angle where door is considered open***
 #define MAX_DISTANCE 200    // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
-boolean doorOpen = false;   // is the door open?
 
 // USE THIS INSTEAD TO REVERSE THE DOOR DIRECTION
-// NewPing sonar_1(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE);  // NewPing setup of closer sensor.
-// NewPing sonar_2(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE);  // NewPing setup of farther sensor.
-NewPing sonar_1(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE);     // NewPing setup of closer sensor.
-NewPing sonar_2(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE);     // NewPing setup of farther sensor.
+// NewPing sonar_1(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE);  // NewPing setup of closer sensor.***
+// NewPing sonar_2(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE);  // NewPing setup of farther sensor.***
+NewPing sonar_1(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE);     // NewPing setup of closer sensor.***
+NewPing sonar_2(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE);     // NewPing setup of farther sensor.***
 
 // RGB_LCD from Adafruit
 Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
@@ -35,9 +33,9 @@ unsigned long microsPerReading, microsPrevious, microsBetweenReads, microsLastRe
 float accelScale, gyroScale;
 
 // MAGNETIC SWITCH BOOLEAN AND BASELINE CALIBRATION FOR IMU
-boolean isMagSwitchOpen = false;                     // true/false about the state of the door according to the magnetic contact switch 
-boolean isMagSwitchClosed = true;                    // false/true redundant compliment for readbility
-boolean readyToBeOpened = true;                      // hysteresis/state change memory from closed to open for calibration
+boolean isMagSwitchOpen = false;                     // true/false about the state of the door according to the magnetic contact switch
+boolean isDoorOpen = false;                          // is the door open?  We define an openDoor to be BOTH isMagSwitchOpen AND doorAngle > OPEN_ANGLE, as opposed to just isMagSwitchOpen
+boolean switchClosedLastIteration = true;            // hysteresis/state change memory from closed to open for calibration
 float baselineYaw;                                   // global variable declaration of the baseline Yaw was the only way to get it to exist outside of consecutive loops-- otherwise it gets erased
 
 // INDICATOR
@@ -95,36 +93,30 @@ void loop() {
 
   // check if it's time to read data and update the filter
   microsNow = micros();
-  if (microsNow - microsPrevious >= microsPerReading) { // This condition is taken from the tutorial code -- it ensures updates happen at the right time --??? is this for IMU delay
-    
+  if (microsNow - microsPrevious >= microsPerReading) { // This condition is taken from the tutorial code -- it ensures updates happen at the right time
+
     // Checks the magnetic switch
-    if (analogRead(SWITCH_PIN) > 800) {            // can tune threshold depending on circuit. currently closed switch = (analogRead output > 800)
-      isMagSwitchOpen   = false;                   // switch is CLOSED, NOT open
-      isMagSwitchClosed = true;
-    }  else if (analogRead(SWITCH_PIN) < 800) {
-      isMagSwitchOpen   = true;                    // switch is OPEN, NOT closed
-      isMagSwitchClosed = false;
-    }
+    isMagSwitchOpen = (analogRead(SWITCH_PIN) < 800);
+    float currentYaw = measureYaw();
 
-    if (isMagSwitchClosed) { // Door is closed
-      closeDoor();
-      printIfDebug("Door not open");
-      readyToBeOpened = true;
-      
-    } else if ((microsNow - microsLastRead < microsBetweenReads) and isMagSwitchOpen) { // Door is open, a movement was recently detected, and we are waiting between movements; do not double count or re-record the last passing time because the person may still be passing through.
-      printIfDebug("Movement Detected");
-      
-    } else if (isMagSwitchOpen) { // Door is open, but a complete movement has not been discovered recently.
-      if (readyToBeOpened) {
-        baselineYaw = measureYaw();
-        readyToBeOpened = false;
+    if (isMagSwitchOpen) {
+      if (switchClosedLastIteration) {
+        baselineYaw = currentYaw;
+        switchClosedLastIteration = false;
       }
-      float currentYaw = measureYaw();
-      float absDifference = abs(currentYaw - baselineYaw);
-      // for now... i will fix with better logic later... probably account for directionality using a similar button system
-      doorAngle=absDifference;      
+    } else {
+      switchClosedLastIteration = true;
+    }
+    
+    float absDifference = abs(currentYaw - baselineYaw);
+    // for now... i will fix with better logic later... probably account for directionality using a similar button system
+    doorAngle = absDifference;
 
-      
+    if (!isMagSwitchOpen || doorAngle < OPEN_ANGLE) { // Door is closed
+      closeDoor();
+    } else if ((microsNow - microsLastRead < microsBetweenReads)) { // Door is open, a movement was recently detected, and we are waiting between movements; do not double count or re-record the last passing time because the person may still be passing through.
+      printIfDebug("Movement Detected");
+    } else { // Door is open, but a complete movement has not been discovered recently.
       openDoor();
       ping_1 = sonar_1.ping_cm();
       ping_2 = sonar_2.ping_cm();
@@ -182,7 +174,6 @@ float measureYaw() { // from the tutorial -- don't worry too much about this.
 void incrementPopulation() {
   population++;
   updatePopulationAndMoveCursor();
-  lcd.setCursor(0, 1);
   lcd.print("Welcome!        ");
 }
 
@@ -191,25 +182,22 @@ void decrementPopulation() {
     population--;
   }
   updatePopulationAndMoveCursor();
-  lcd.setCursor(0, 1);
   lcd.print("Have a nice day!");
 }
 
 void openDoor() { // only open the door if it wasn't already opened
-  if (!doorOpen) {
-    lcd.setBacklight(0x7); // white backlight
-    lcd.setCursor(0, 1);
-    lcd.println("open              ");
-    doorOpen = true;
+  if (!isDoorOpen) {
+    isDoorOpen = true;
+    printIfDebug("Door open");
   }
 }
 
 void closeDoor() { // only close the door if it wasn't already closed.
-  if (doorOpen) {
-    lcd.setBacklight(0x7); // dark backlight
+  if (isDoorOpen) {
     lcd.setCursor(0, 1);
     lcd.println("closed              ");
-    doorOpen = false;
+    isDoorOpen = false;
+    printIfDebug("Door closed");
   }
 }
 
