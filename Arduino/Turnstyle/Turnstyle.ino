@@ -4,8 +4,7 @@
 #include <Wire.h>
 #include <Adafruit_RGBLCDShield.h>
 
-
-// parameters indicated with a * should be tuned to fit the door.
+// parameters indicated with a *** should be tuned to fit the door.
 
 // ULTRASONIC -- settings match for blackboard-hardware V1.0
 #define TRIGGER_PIN_1  12  // Arduino pin tied to trigger pin on the first ultrasonic sensor.
@@ -14,15 +13,15 @@
 #define ECHO_PIN_2     9   // Arduino pin tied to echo pin on the second ultrasonic sensor.
 #define SWITCH_PIN     A2  // Arduino pin tied to magnetic contact switch lead
 
-#define DETECTION_THRESH 25 // Distance cutoff for passing (< DETECTION_THRESH is considered to be a person in proximity)
-#define OPEN_ANGLE 20       // Angle where door is considered open
+#define DETECTION_THRESH 25 // Distance cutoff for passing (< DETECTION_THRESH is considered to be a person in proximity)***
+#define OPEN_ANGLE 20       // Angle where door is considered open***
 #define MAX_DISTANCE 200    // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
 
 // USE THIS INSTEAD TO REVERSE THE DOOR DIRECTION
-// NewPing sonar_1(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE);  // NewPing setup of closer sensor.
-// NewPing sonar_2(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE);  // NewPing setup of farther sensor.
-NewPing sonar_1(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE);     // NewPing setup of closer sensor.
-NewPing sonar_2(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE);     // NewPing setup of farther sensor.
+// NewPing sonar_1(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE);  // NewPing setup of closer sensor.***
+// NewPing sonar_2(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE);  // NewPing setup of farther sensor.***
+NewPing sonar_1(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE);     // NewPing setup of closer sensor.***
+NewPing sonar_2(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE);     // NewPing setup of farther sensor.***
 
 // RGB_LCD from Adafruit
 Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
