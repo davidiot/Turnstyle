@@ -97,20 +97,19 @@ void loop() {
 
     // Checks the magnetic switch
     isMagSwitchOpen = (analogRead(SWITCH_PIN) < 800);
-    float currentYaw = measureYaw();
 
     if (isMagSwitchOpen) {
+      float currentYaw = measureYaw();
       if (switchClosedLastIteration) {
         baselineYaw = currentYaw;
         switchClosedLastIteration = false;
       }
+      float absDifference = abs(currentYaw - baselineYaw);
+      // for now... i will fix with better logic later... probably account for directionality using a similar button system
+      doorAngle = absDifference;
     } else {
       switchClosedLastIteration = true;
     }
-    
-    float absDifference = abs(currentYaw - baselineYaw);
-    // for now... i will fix with better logic later... probably account for directionality using a similar button system
-    doorAngle = absDifference;
 
     if (!isMagSwitchOpen || doorAngle < OPEN_ANGLE) { // Door is closed
       closeDoor();
