@@ -6,7 +6,7 @@ rgb_lcd lcd;
 BLEPeripheral blePeripheral;
 BLEService turnstyleBleService("180D"); // just need a service that transmits a number
 
-BLEIntCharacteristic turnstyleBleIntCharacteristic("2A37", BLERead | BLENotify);
+BLECharacteristic turnstyleBleIntCharacteristic("2A37", BLERead | BLENotify, 2);
 
 int buttonPin = 4;
 int buzzerPin = 8;
@@ -45,25 +45,33 @@ void loop() {
     digitalWrite(13, HIGH);
     // as long as the central is still connected:
     while (central.connected()) {
-      if (digitalRead(buttonPin)) { /*check button is pressed or not */
-        digitalWrite(buzzerPin, HIGH);  //pressed，then buzzer buzzes
-        if (!repLock) {
-          beeps++;
-          Serial.print(beeps);
-          Serial.println("*"); // we use * as a delimiter because there is some weird glitch with Node creating extra newlines
-          lcd.setCursor(7, 0);
-          lcd.print(beeps);
-          repLock = true;
-          turnstyleBleIntCharacteristic.setValue(beeps); 
-        }
-      } else {
-        digitalWrite(buzzerPin, LOW);//not pressed，then buzzer remains silent
-        repLock = false;
-      }
+      loopHelper(true);
     }
+    // when the central disconnects, turn off the LED:
+    digitalWrite(13, LOW);
+    Serial.print("Disconnected from central: ");
+    Serial.println(central.address());
+  } else {
+    loopHelper(false);
   }
-  // when the central disconnects, turn off the LED:
-  digitalWrite(13, LOW);
-  Serial.print("Disconnected from central: ");
-  Serial.println(central.address());
+}
+
+void loopHelper(boolean connected) {
+  if (digitalRead(buttonPin)) { /*check button is pressed or not */
+    digitalWrite(buzzerPin, HIGH);  //pressed，then buzzer buzzes
+    if (!repLock) {
+      beeps++;
+      Serial.print(beeps);
+      Serial.println("*"); // we use * as a delimiter because there is some weird glitch with Node creating extra newlines
+      lcd.setCursor(7, 0);
+      lcd.print(beeps);
+      repLock = true;
+      boolean thresh = (beeps > 10);
+      const unsigned char dataArray[2] = { (char) beeps, (char) ( ((beeps >> 8) & 0x7F) | (thresh ? 0x80 : 0x00) )};
+      turnstyleBleIntCharacteristic.setValue(dataArray, 2);
+    }
+  } else {
+    digitalWrite(buzzerPin, LOW);//not pressed，then buzzer remains silent
+    repLock = false;
+  }
 }
