@@ -3,6 +3,7 @@
 #include <NewPing.h>
 #include <Wire.h>
 #include <Adafruit_RGBLCDShield.h>
+#include <CurieBLE.h>
 
 // parameters indicated with a *** should be tuned to fit the door.
 
@@ -25,6 +26,11 @@ NewPing sonar_2(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE);     // NewPing setup o
 
 // RGB_LCD from Adafruit
 Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
+
+// BLUETOOTH
+BLEPeripheral blePeripheral;
+BLEService turnstyleBleService("180D"); // just need a service that transmits a number
+BLECharacteristic turnstyleBleIntCharacteristic("2A37", BLERead | BLENotify, 2);
 
 // MADGEWICK
 // see https://www.arduino.cc/en/Tutorial/Genuino101CurieIMUOrientationVisualiser
@@ -51,6 +57,14 @@ boolean debug = true;
 // SETUP
 void setup() {
   Serial.begin(9600);
+
+  // configure Bluetooth
+  blePeripheral.setLocalName("Turnstyle");
+  blePeripheral.setAdvertisedServiceUuid(turnstyleBleService.uuid());
+  blePeripheral.addAttribute(turnstyleBleService);
+  blePeripheral.addAttribute(turnstyleBleIntCharacteristic);
+  blePeripheral.begin();
+  printIfDebug("Bluetooth device active, waiting for connections...");
 
   // configure LCD
   lcd.begin(16, 2);
@@ -87,6 +101,33 @@ void setup() {
 }
 
 void loop() {
+  // listen for BLE peripherals to connect:
+  BLECentral central = blePeripheral.central();
+  // if a central is connected to peripheral:
+  if (central) {
+    if (debug) {
+      Serial.print("Connected to central: ");
+    }
+    // print the central's MAC address:
+    printIfDebug(central.address());
+    // turn on the LED to indicate the connection:
+    digitalWrite(13, HIGH);
+    // as long as the central is still connected:
+    while (central.connected()) {
+      loopHelper(true);
+    }
+    // when the central disconnects, turn off the LED:
+    digitalWrite(13, LOW);
+    if (debug) {
+      Serial.print("Disconnected from central: ");
+    }
+    printIfDebug(central.address());
+  } else {
+    loopHelper(false);
+  }
+}
+
+void loopHelper(boolean connected) {  // The code in this function is basically what would appear in loop() without bluetooth
   float doorAngle;
   int ping_1, ping_2;
   unsigned long microsNow;
@@ -143,9 +184,16 @@ void loop() {
       printinfo(doorAngle, ping_1, ping_2);
     }
 
+    updateBleCharacteristic();
+
     // increment previous time, so we keep proper pace
     microsPrevious = microsPrevious + microsPerReading;
   }
+}
+
+void updateBleCharacteristic() {
+  const unsigned char dataArray[2] = { (char) population, (char) ( ((population >> 8) & 0x7F) | (isDoorOpen ? 0x80 : 0x00) )};
+  turnstyleBleIntCharacteristic.setValue(dataArray, 2);
 }
 
 float measureYaw() { // from the tutorial -- don't worry too much about this.

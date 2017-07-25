@@ -5,7 +5,6 @@ rgb_lcd lcd;
 
 BLEPeripheral blePeripheral;
 BLEService turnstyleBleService("180D"); // just need a service that transmits a number
-
 BLECharacteristic turnstyleBleIntCharacteristic("2A37", BLERead | BLENotify, 2);
 
 int buttonPin = 4;
