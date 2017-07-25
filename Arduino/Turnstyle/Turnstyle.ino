@@ -2,12 +2,10 @@
 #include <MadgwickAHRS.h>
 #include <NewPing.h>
 #include <Wire.h>
+#include <Adafruit_MCP23017.h>
 #include <Adafruit_RGBLCDShield.h>
 #include <CurieBLE.h>
 
-// parameters indicated with a *** should be tuned to fit the door.
-
-// ULTRASONIC -- settings match for blackboard-hardware V1.0
 #define TRIGGER_PIN_1  12  // Arduino pin tied to trigger pin on the first ultrasonic sensor.
 #define ECHO_PIN_1     11  // Arduino pin tied to echo pin on the first ultrasonic sensor.
 #define TRIGGER_PIN_2  10  // Arduino pin tied to trigger pin on the second ultrasonic sensor.
@@ -18,11 +16,12 @@
 #define OPEN_ANGLE 20       // Angle where door is considered open***
 #define MAX_DISTANCE 200    // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
 
-// USE THIS INSTEAD TO REVERSE THE DOOR DIRECTION
-// NewPing sonar_1(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE);  // NewPing setup of closer sensor.***
-// NewPing sonar_2(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE);  // NewPing setup of farther sensor.***
-NewPing sonar_1(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE);     // NewPing setup of closer sensor.***
-NewPing sonar_2(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE);     // NewPing setup of farther sensor.***
+// ULTRASONIC -- settings match for blackboard-hardware V1.0
+NewPing sonar_1(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE);
+NewPing sonar_2(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE);
+NewPing closeSonar = sonar_1;                               // NewPing setup of closer sensor.
+NewPing farSonar = sonar_2;                                 // NewPing setup of farther sensor.
+boolean enterFromLeftToRight = true;                        // is leftToRight movement considered entering or vice-versa?
 
 // RGB_LCD from Adafruit
 Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
@@ -64,7 +63,7 @@ void setup() {
   blePeripheral.addAttribute(turnstyleBleService);
   blePeripheral.addAttribute(turnstyleBleIntCharacteristic);
   blePeripheral.begin();
-  printIfDebug("Bluetooth device active, waiting for connections...");
+  printlnIfDebug("Bluetooth device active, waiting for connections...");
 
   // configure LCD
   lcd.begin(16, 2);
@@ -91,10 +90,6 @@ void setup() {
   microsBetweenReads = 1000000 / 2;     // must wait half a second between consecutive reads
   microsLastRead = micros();            // time since last movement detected
 
-  // NOTE: the initial angle of the door is always 180 degrees, so this commented code is not necessary for now.
-  // get initial angle of the door
-  // startAngle = measureYaw();
-
   // Indicate that setup is complete
   pinMode(ledPin, OUTPUT);
   digitalWrite(ledPin, HIGH);
@@ -105,11 +100,9 @@ void loop() {
   BLECentral central = blePeripheral.central();
   // if a central is connected to peripheral:
   if (central) {
-    if (debug) {
-      Serial.print("Connected to central: ");
-    }
+    printIfDebug("Connected to central: ");
     // print the central's MAC address:
-    printIfDebug(central.address());
+    printlnIfDebug(central.address());
     // turn on the LED to indicate the connection:
     digitalWrite(13, HIGH);
     // as long as the central is still connected:
@@ -118,10 +111,8 @@ void loop() {
     }
     // when the central disconnects, turn off the LED:
     digitalWrite(13, LOW);
-    if (debug) {
-      Serial.print("Disconnected from central: ");
-    }
-    printIfDebug(central.address());
+    printIfDebug("Disconnected from central: ");
+    printlnIfDebug(central.address());
   } else {
     loopHelper(false);
   }
@@ -145,9 +136,11 @@ void loopHelper(boolean connected) {  // The code in this function is basically 
         baselineYaw = currentYaw;
         switchClosedLastIteration = false;
       }
-      float absDifference = abs(currentYaw - baselineYaw);
-      // for now... i will fix with better logic later... probably account for directionality using a similar button system
-      doorAngle = absDifference;
+      float doorAngle = abs(currentYaw - baselineYaw);
+      // if the doorAngle is > 180, it must be due to the discontinuity, assuming doors open to an angle of max 180 degrees.
+      if (doorAngle > 180) {
+        doorAngle = 360 - doorAngle;
+      }
     } else {
       switchClosedLastIteration = true;
     }
@@ -155,11 +148,11 @@ void loopHelper(boolean connected) {  // The code in this function is basically 
     if (!isMagSwitchOpen || doorAngle < OPEN_ANGLE) { // Door is closed
       closeDoor();
     } else if ((microsNow - microsLastRead < microsBetweenReads)) { // Door is open, a movement was recently detected, and we are waiting between movements; do not double count or re-record the last passing time because the person may still be passing through.
-      printIfDebug("Movement Detected");
+      printlnIfDebug("Movement Detected");
     } else { // Door is open, but a complete movement has not been discovered recently.
       openDoor();
-      ping_1 = sonar_1.ping_cm();
-      ping_2 = sonar_2.ping_cm();
+      ping_1 = closeSonar.ping_cm();
+      ping_2 = farSonar.ping_cm();
 
       // This block and the next have similar logic.  When we detect a ping, we adjust population and reset the latest detection times if the other sensor's last detection time is recent.  Otherwise, we update the current sensor's last detection.
       if (detect(ping_2)) {
@@ -181,14 +174,46 @@ void loopHelper(boolean connected) {  // The code in this function is basically 
           closeLastTime = 0;
         }
       }
-      printinfo(doorAngle, ping_1, ping_2);
+      printInfoIfDebug(doorAngle, ping_1, ping_2);
     }
 
-    updateBleCharacteristic();
+    // Only bother updating bluetooth data if a device is connected
+    if (connected) {
+      updateBleCharacteristic();
+    }
+
+    // CURRENT CONTROL SCHEME: left and right buttons make the entering direction in the orientation specified by the button.
+    // select buttons always toggles the orientation.
+    uint8_t buttons = lcd.readButtons();
+    if (buttons) {
+      if (buttons & BUTTON_LEFT) {
+        if (enterFromLeftToRight) {
+          swapSonars();
+        }
+      }
+      if (buttons & BUTTON_RIGHT) {
+        if (!enterFromLeftToRight) {
+          swapSonars();
+        }
+      }
+      if (buttons & BUTTON_SELECT) {
+        swapSonars();
+      }
+    }
 
     // increment previous time, so we keep proper pace
     microsPrevious = microsPrevious + microsPerReading;
   }
+}
+
+// Flip the orientation of the sensors
+void swapSonars() {
+  NewPing temp = closeSonar;
+  closeSonar = farSonar;
+  farSonar = temp;
+  enterFromLeftToRight = !enterFromLeftToRight;
+  String message = enterFromLeftToRight ? "Enter this way->" : "<-Enter this way";
+  displayMessage(message);
 }
 
 void updateBleCharacteristic() {
@@ -196,7 +221,93 @@ void updateBleCharacteristic() {
   turnstyleBleIntCharacteristic.setValue(dataArray, 2);
 }
 
-float measureYaw() { // from the tutorial -- don't worry too much about this.
+void incrementPopulation() {
+  population++;
+  updatePopulation();
+  displayMessage("Welcome!        ");
+}
+
+void decrementPopulation() {
+  if (population > 0) { // whoops
+    population--;
+  }
+  updatePopulation();
+  displayMessage("Have a nice day!");
+}
+
+void openDoor() { // only open the door if it wasn't already opened
+  if (!isDoorOpen) {
+    isDoorOpen = true;
+    printlnIfDebug("Door open");
+  }
+}
+
+void closeDoor() { // only close the door if it wasn't already closed.
+  if (isDoorOpen) {
+    isDoorOpen = false;
+    printlnIfDebug("Door closed");
+  }
+}
+
+// Update population
+void updatePopulation() {
+  lcd.setCursor(12, 0);
+  lcd.print("    ");
+  lcd.setCursor(12, 0);
+  lcd.print(population);
+
+  printIfDebug("Population: ");
+  Serial.print(population);
+  if (!debug) {
+    Serial.println("*");
+  } else {
+    Serial.println();
+  }
+  farLastTime = 0;
+  closeLastTime = 0;
+  microsLastRead = micros();
+}
+
+// displays a message in the second line of the lcd.  Use for greetings/farewells and calibrations
+void displayMessage(String message) {
+  lcd.setCursor(0, 1);
+  lcd.print(message);
+}
+
+// did we get a detection?  boolean logic goes here to avoid doing >0 checks (which indicate that the ping was too far away)
+boolean detect(int pingValue) {
+  return pingValue < DETECTION_THRESH && pingValue > 0;
+}
+
+// prints measurement info
+void printInfoIfDebug(float doorAngle, int ping_1, int ping_2) {
+  if (debug) {
+    Serial.print("Door Angle: ");
+    Serial.print(doorAngle);
+    Serial.print(" | Ping 1: ");
+    Serial.print(ping_1); // Send ping, get distance in cm and print result (0 = outside set distance range)
+    Serial.print(" cm | Ping 2: ");
+    Serial.print(ping_2); // Send ping, get distance in cm and print result (0 = outside set distance range)
+    Serial.println(" cm");
+  }
+}
+
+// wrap all Serial.prints using this function for ease of debugging
+void printIfDebug(String message) {
+  if (debug) {
+    Serial.print(message);
+  }
+}
+
+// wrap all Serial.printlns using this function for ease of debugging
+void printlnIfDebug(String message) {
+  if (debug) {
+    Serial.println(message);
+  }
+}
+
+// from the tutorial -- don't worry too much about this.
+float measureYaw() {
   int aix, aiy, aiz;
   int gix, giy, giz;
   float ax, ay, az;
@@ -218,58 +329,6 @@ float measureYaw() { // from the tutorial -- don't worry too much about this.
   return filter.getYaw();
 }
 
-void incrementPopulation() {
-  population++;
-  updatePopulationAndMoveCursor();
-  lcd.print("Welcome!        ");
-}
-
-void decrementPopulation() {
-  if (population > 0) { // whoops
-    population--;
-  }
-  updatePopulationAndMoveCursor();
-  lcd.print("Have a nice day!");
-}
-
-void openDoor() { // only open the door if it wasn't already opened
-  if (!isDoorOpen) {
-    isDoorOpen = true;
-    printIfDebug("Door open");
-  }
-}
-
-void closeDoor() { // only close the door if it wasn't already closed.
-  if (isDoorOpen) {
-    lcd.setCursor(0, 1);
-    lcd.println("closed              ");
-    isDoorOpen = false;
-    printIfDebug("Door closed");
-  }
-}
-
-// Update population and move cursor to where the message will be written
-void updatePopulationAndMoveCursor() {
-  lcd.setCursor(12, 0);
-  lcd.print("    ");
-  lcd.setCursor(12, 0);
-  lcd.print(population);
-  lcd.setCursor(0, 1);
-
-  if (debug) {
-    Serial.print("Population: ");
-  }
-  Serial.print(population);
-  if (!debug) {
-    Serial.println("*");
-  } else {
-    Serial.println();
-  }
-  farLastTime = 0;
-  closeLastTime = 0;
-  microsLastRead = micros();
-}
-
 // from tutorial
 float convertRawAcceleration(int aRaw) {
   // since we are using 2G range
@@ -288,27 +347,4 @@ float convertRawGyro(int gRaw) {
 
   float g = (gRaw * 250.0) / 32768.0;
   return g;
-}
-
-// did we get a detection?  boolean logic goes here to avoid doing >0 checks (which indicate that the ping was too far away)
-boolean detect(int pingValue) {
-  return pingValue < DETECTION_THRESH && pingValue > 0;
-}
-
-void printinfo(float doorAngle, int ping_1, int ping_2) {
-  if (debug) {
-    Serial.print("Door Angle: ");
-    Serial.print(doorAngle);
-    Serial.print(" | Ping 1: ");
-    Serial.print(ping_1); // Send ping, get distance in cm and print result (0 = outside set distance range)
-    Serial.print(" cm | Ping 2: ");
-    Serial.print(ping_2); // Send ping, get distance in cm and print result (0 = outside set distance range)
-    Serial.println(" cm");
-  }
-}
-
-void printIfDebug(String message) {
-  if (debug) {
-    Serial.println(message);
-  }
 }
