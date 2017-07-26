@@ -1,0 +1,125 @@
+-- Merging decision tree log ---
+manifest
+ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:16:1-61:12
+	package
+		ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:17:5-50
+	android:versionName
+		ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:19:5-30
+		INJECTED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml
+		INJECTED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml
+	android:versionCode
+		ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:18:5-28
+		INJECTED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml
+		INJECTED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml
+	xmlns:android
+		ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:16:11-69
+uses-feature#android.hardware.bluetooth_le
+ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:30:5-32:35
+	android:required
+		ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:32:9-32
+	android:name
+		ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:31:9-53
+uses-permission#android.permission.BLUETOOTH
+ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:34:5-68
+	android:name
+		ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:34:22-65
+uses-permission#android.permission.BLUETOOTH_ADMIN
+ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:35:5-74
+	android:name
+		ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:35:22-71
+application
+ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:37:5-59:19
+MERGED from [com.android.support:support-v13:25.3.1] C:\Users\Daniel\.android\build-cache\fe48f784d474ce9a711435288a00a6748b6923e0\output\AndroidManifest.xml:29:5-20
+MERGED from [com.android.support:cardview-v7:25.3.1] C:\Users\Daniel\.android\build-cache\99d14873dc1a4b8fb5e5293f2121c89e99c1e1d2\output\AndroidManifest.xml:26:5-20
+MERGED from [com.android.support:appcompat-v7:25.3.1] C:\Users\Daniel\.android\build-cache\82cea4c54033db00b98617f74363843242108ef0\output\AndroidManifest.xml:29:5-20
+MERGED from [com.android.support:support-v4:25.3.1] C:\Users\Daniel\.android\build-cache\61adbf703ffb90e6c2bd97b8459ced5d427ca8a7\output\AndroidManifest.xml:29:5-20
+MERGED from [com.android.support:support-fragment:25.3.1] C:\Users\Daniel\.android\build-cache\374407bbe9439120f2064465ec28d14326d8d9ed\output\AndroidManifest.xml:29:5-20
+MERGED from [com.android.support:support-media-compat:25.3.1] C:\Users\Daniel\.android\build-cache\7b3937913b3394431fdf6c6f68082b7c3eb46098\output\AndroidManifest.xml:29:5-20
+MERGED from [com.android.support:support-core-ui:25.3.1] C:\Users\Daniel\.android\build-cache\9f25c391e9bd3c341aab6b929089237e1e3cdd74\output\AndroidManifest.xml:29:5-20
+MERGED from [com.android.support:support-core-utils:25.3.1] C:\Users\Daniel\.android\build-cache\63a8da26f57418579d471c04f20f8cb2a66a2943\output\AndroidManifest.xml:29:5-20
+MERGED from [com.android.support:animated-vector-drawable:25.3.1] C:\Users\Daniel\.android\build-cache\3526a46912bbcc9cac7d131c597f6deb03ab8000\output\AndroidManifest.xml:26:5-20
+MERGED from [com.android.support:support-vector-drawable:25.3.1] C:\Users\Daniel\.android\build-cache\79ffc26592c39b1084b818e09fce000d024f4f91\output\AndroidManifest.xml:26:5-20
+MERGED from [com.android.support:support-compat:25.3.1] C:\Users\Daniel\.android\build-cache\9297ff7c2ff2e18cb49170b04ff795d1cdd721d8\output\AndroidManifest.xml:29:5-20
+MERGED from [com.android.support.constraint:constraint-layout:1.0.2] C:\Users\Daniel\.android\build-cache\1958c1bbce1e22c95127c89c9047bc77f50f0556\output\AndroidManifest.xml:9:5-20
+	android:label
+		ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:39:9-34
+	android:icon
+		ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:38:9-45
+	android:theme
+		ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:40:9-56
+activity#com.example.android.bluetoothlegatt.DeviceScanActivity
+ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:41:9-49:20
+	android:label
+		ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:43:13-38
+	android:name
+		ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:42:13-47
+intent-filter#android.intent.action.MAIN+android.intent.category.LAUNCHER
+ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:44:13-48:29
+action#android.intent.action.MAIN
+ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:45:17-69
+	android:name
+		ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:45:25-66
+category#android.intent.category.LAUNCHER
+ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:47:17-77
+	android:name
+		ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:47:27-74
+activity#com.example.android.bluetoothlegatt.DeviceControlActivity
+ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:50:9-59
+	android:name
+		ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:50:19-56
+service#com.example.android.bluetoothlegatt.BluetoothLeService
+ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:52:9-54:38
+	android:enabled
+		ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:54:13-35
+	android:name
+		ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:53:13-47
+activity#com.example.android.bluetoothlegatt.TurnstyleContolActivity
+ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:56:9-61
+	android:name
+		ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:56:19-58
+activity#com.example.android.bluetoothlegatt.TurnstyleControlActivity
+ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:57:9-62
+	android:name
+		ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:57:19-59
+activity#com.example.android.bluetoothlegatt.SettingsActivity
+ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:58:9-63
+	android:name
+		ADDED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml:58:19-51
+uses-sdk
+INJECTED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml reason: use-sdk injection requested
+MERGED from [com.android.support:support-v13:25.3.1] C:\Users\Daniel\.android\build-cache\fe48f784d474ce9a711435288a00a6748b6923e0\output\AndroidManifest.xml:21:5-23:55
+MERGED from [com.android.support:cardview-v7:25.3.1] C:\Users\Daniel\.android\build-cache\99d14873dc1a4b8fb5e5293f2121c89e99c1e1d2\output\AndroidManifest.xml:20:5-43
+MERGED from [com.android.support:appcompat-v7:25.3.1] C:\Users\Daniel\.android\build-cache\82cea4c54033db00b98617f74363843242108ef0\output\AndroidManifest.xml:21:5-23:78
+MERGED from [com.android.support:support-v4:25.3.1] C:\Users\Daniel\.android\build-cache\61adbf703ffb90e6c2bd97b8459ced5d427ca8a7\output\AndroidManifest.xml:21:5-23:54
+MERGED from [com.android.support:support-fragment:25.3.1] C:\Users\Daniel\.android\build-cache\374407bbe9439120f2064465ec28d14326d8d9ed\output\AndroidManifest.xml:21:5-23:60
+MERGED from [com.android.support:support-media-compat:25.3.1] C:\Users\Daniel\.android\build-cache\7b3937913b3394431fdf6c6f68082b7c3eb46098\output\AndroidManifest.xml:21:5-23:63
+MERGED from [com.android.support:support-core-ui:25.3.1] C:\Users\Daniel\.android\build-cache\9f25c391e9bd3c341aab6b929089237e1e3cdd74\output\AndroidManifest.xml:21:5-23:58
+MERGED from [com.android.support:support-core-utils:25.3.1] C:\Users\Daniel\.android\build-cache\63a8da26f57418579d471c04f20f8cb2a66a2943\output\AndroidManifest.xml:21:5-23:61
+MERGED from [com.android.support:animated-vector-drawable:25.3.1] C:\Users\Daniel\.android\build-cache\3526a46912bbcc9cac7d131c597f6deb03ab8000\output\AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:support-vector-drawable:25.3.1] C:\Users\Daniel\.android\build-cache\79ffc26592c39b1084b818e09fce000d024f4f91\output\AndroidManifest.xml:20:5-43
+MERGED from [com.android.support:support-compat:25.3.1] C:\Users\Daniel\.android\build-cache\9297ff7c2ff2e18cb49170b04ff795d1cdd721d8\output\AndroidManifest.xml:21:5-23:58
+MERGED from [com.android.support.constraint:constraint-layout:1.0.2] C:\Users\Daniel\.android\build-cache\1958c1bbce1e22c95127c89c9047bc77f50f0556\output\AndroidManifest.xml:5:5-7:41
+	tools:overrideLibrary
+		ADDED from [com.android.support:support-v13:25.3.1] C:\Users\Daniel\.android\build-cache\fe48f784d474ce9a711435288a00a6748b6923e0\output\AndroidManifest.xml:23:9-52
+	android:targetSdkVersion
+		INJECTED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml
+		INJECTED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml
+		INJECTED from C:\Users\Daniel\github\Turnstyle\Android\Turnstyle\Application\src\main\AndroidManifest.xml
+meta-data#android.support.VERSION
+ADDED from [com.android.support:support-v13:25.3.1] C:\Users\Daniel\.android\build-cache\fe48f784d474ce9a711435288a00a6748b6923e0\output\AndroidManifest.xml:25:5-27:34
+MERGED from [com.android.support:cardview-v7:25.3.1] C:\Users\Daniel\.android\build-cache\99d14873dc1a4b8fb5e5293f2121c89e99c1e1d2\output\AndroidManifest.xml:22:5-24:34
+MERGED from [com.android.support:appcompat-v7:25.3.1] C:\Users\Daniel\.android\build-cache\82cea4c54033db00b98617f74363843242108ef0\output\AndroidManifest.xml:25:5-27:34
+MERGED from [com.android.support:support-v4:25.3.1] C:\Users\Daniel\.android\build-cache\61adbf703ffb90e6c2bd97b8459ced5d427ca8a7\output\AndroidManifest.xml:25:5-27:34
+MERGED from [com.android.support:support-fragment:25.3.1] C:\Users\Daniel\.android\build-cache\374407bbe9439120f2064465ec28d14326d8d9ed\output\AndroidManifest.xml:25:5-27:34
+MERGED from [com.android.support:support-media-compat:25.3.1] C:\Users\Daniel\.android\build-cache\7b3937913b3394431fdf6c6f68082b7c3eb46098\output\AndroidManifest.xml:25:5-27:34
+MERGED from [com.android.support:support-core-ui:25.3.1] C:\Users\Daniel\.android\build-cache\9f25c391e9bd3c341aab6b929089237e1e3cdd74\output\AndroidManifest.xml:25:5-27:34
+MERGED from [com.android.support:support-core-utils:25.3.1] C:\Users\Daniel\.android\build-cache\63a8da26f57418579d471c04f20f8cb2a66a2943\output\AndroidManifest.xml:25:5-27:34
+MERGED from [com.android.support:animated-vector-drawable:25.3.1] C:\Users\Daniel\.android\build-cache\3526a46912bbcc9cac7d131c597f6deb03ab8000\output\AndroidManifest.xml:22:5-24:34
+MERGED from [com.android.support:support-vector-drawable:25.3.1] C:\Users\Daniel\.android\build-cache\79ffc26592c39b1084b818e09fce000d024f4f91\output\AndroidManifest.xml:22:5-24:34
+MERGED from [com.android.support:support-compat:25.3.1] C:\Users\Daniel\.android\build-cache\9297ff7c2ff2e18cb49170b04ff795d1cdd721d8\output\AndroidManifest.xml:25:5-27:34
+	android:value
+		ADDED from [com.android.support:support-v13:25.3.1] C:\Users\Daniel\.android\build-cache\fe48f784d474ce9a711435288a00a6748b6923e0\output\AndroidManifest.xml:27:9-31
+	android:name
+		ADDED from [com.android.support:support-v13:25.3.1] C:\Users\Daniel\.android\build-cache\fe48f784d474ce9a711435288a00a6748b6923e0\output\AndroidManifest.xml:26:9-47
