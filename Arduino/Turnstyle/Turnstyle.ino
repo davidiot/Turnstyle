@@ -27,9 +27,11 @@ boolean enterFromLeftToRight = true;                        // is leftToRight mo
 Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
 
 // BLUETOOTH
+// UUIDs were randomly generated using https://www.uuidgenerator.net/
 BLEPeripheral blePeripheral;
-BLEService turnstyleBleService("180D"); // just need a service that transmits a number
-BLECharacteristic turnstyleBleIntCharacteristic("2A37", BLERead | BLENotify, 2);
+BLEService turnstyleBleService("468db76d-4b92-48a4-8727-426f9a4a2482");
+BLEUnsignedIntCharacteristic BlePopulationCharacteristic("d75b671b-6ea4-464e-89fd-1ab8ad76440b", BLERead | BLEWrite | BLENotify);
+BLEIntCharacteristic BleOpenCharacteristic("8404e92d-0ca7-480b-8b3f-7a1e4c8406f1", BLERead | BLENotify); // See https://github.com/01org/corelibs-arduino101/issues/554 for why we don't use BleBoolCharacteristic
 
 // MADGEWICK
 // see https://www.arduino.cc/en/Tutorial/Genuino101CurieIMUOrientationVisualiser
@@ -47,7 +49,7 @@ float baselineYaw;                                   // global variable declarat
 const int ledPin =  13;      // the number of the on-board LED in the Arduino 101
 
 // POPULATION
-int population = 0;          // current population of the room
+unsigned int population = 0;          // current population of the room
 unsigned long closeLastTime = 0, farLastTime = 0; // The last times a person was detected at the close and far sensors, respectively.  Note that 0 means the last detection never happened or happened too long ago.
 
 // FOR DEBUGGING -- SET TO FALSE TO USE WITH NODE SERVER
@@ -61,7 +63,8 @@ void setup() {
   blePeripheral.setLocalName("Turnstyle");
   blePeripheral.setAdvertisedServiceUuid(turnstyleBleService.uuid());
   blePeripheral.addAttribute(turnstyleBleService);
-  blePeripheral.addAttribute(turnstyleBleIntCharacteristic);
+  blePeripheral.addAttribute(BlePopulationCharacteristic);
+  blePeripheral.addAttribute(BleOpenCharacteristic);
   blePeripheral.begin();
   printlnIfDebug("Bluetooth device active, waiting for connections...");
 
@@ -136,7 +139,7 @@ void loopHelper(boolean connected) {  // The code in this function is basically 
         baselineYaw = currentYaw;
         switchClosedLastIteration = false;
       }
-      float doorAngle = abs(currentYaw - baselineYaw);
+      doorAngle = abs(currentYaw - baselineYaw);
       // if the doorAngle is > 180, it must be due to the discontinuity, assuming doors open to an angle of max 180 degrees.
       if (doorAngle > 180) {
         doorAngle = 360 - doorAngle;
@@ -179,7 +182,7 @@ void loopHelper(boolean connected) {  // The code in this function is basically 
 
     // Only bother updating bluetooth data if a device is connected
     if (connected) {
-      updateBleCharacteristic();
+      updateBleCharacteristics();
     }
 
     // CURRENT CONTROL SCHEME: left and right buttons make the entering direction in the orientation specified by the button.
@@ -216,9 +219,10 @@ void swapSonars() {
   displayMessage(message);
 }
 
-void updateBleCharacteristic() {
-  const unsigned char dataArray[2] = { (char) population, (char) ( ((population >> 8) & 0x7F) | (isDoorOpen ? 0x80 : 0x00) )};
-  turnstyleBleIntCharacteristic.setValue(dataArray, 2);
+void updateBleCharacteristics() {
+  // const unsigned char dataArray[2] = { (char) population, (char) ( ((population >> 8) & 0x7F) | (isDoorOpen ? 0x80 : 0x00) )}; <- use this to merge the two characteristics
+  BlePopulationCharacteristic.setValue(population);
+  BleOpenCharacteristic.setValue(isDoorOpen);
 }
 
 void incrementPopulation() {

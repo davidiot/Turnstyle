@@ -4,21 +4,23 @@
 rgb_lcd lcd;
 
 BLEPeripheral blePeripheral;
-BLEService turnstyleBleService("180D"); // just need a service that transmits a number
-BLECharacteristic turnstyleBleIntCharacteristic("2A37", BLERead | BLENotify, 2);
+BLEService turnstyleBleService("468db76d-4b92-48a4-8727-426f9a4a2482");
+BLEUnsignedIntCharacteristic BlePopulationCharacteristic("d75b671b-6ea4-464e-89fd-1ab8ad76440b", BLERead | BLEWrite | BLENotify);
+BLEIntCharacteristic BleOpenCharacteristic("8404e92d-0ca7-480b-8b3f-7a1e4c8406f1", BLERead | BLENotify); // See https://github.com/01org/corelibs-arduino101/issues/554 for why we don't use BleBoolCharacteristic
 
 int buttonPin = 4;
 int buzzerPin = 8;
 
-int beeps = 0;
+unsigned int beeps = 0;
 boolean repLock = false; // prevents double counting
 
 void setup() {
   Serial.begin(9600);
-  blePeripheral.setLocalName("Turnstyle");
-  blePeripheral.setAdvertisedServiceUuid(turnstyleBleService.uuid());
   blePeripheral.addAttribute(turnstyleBleService);
-  blePeripheral.addAttribute(turnstyleBleIntCharacteristic);
+  blePeripheral.addAttribute(BlePopulationCharacteristic);
+  blePeripheral.addAttribute(BleOpenCharacteristic);
+  blePeripheral.setAdvertisedServiceUuid(turnstyleBleService.uuid());
+  blePeripheral.setLocalName("Turnstyle");
   blePeripheral.begin();
   Serial.println("Bluetooth device active, waiting for connections...");
 
@@ -66,8 +68,10 @@ void loopHelper(boolean connected) {
       lcd.print(beeps);
       repLock = true;
       boolean thresh = (beeps > 10);
-      const unsigned char dataArray[2] = { (char) beeps, (char) ( ((beeps >> 8) & 0x7F) | (thresh ? 0x80 : 0x00) )};
-      turnstyleBleIntCharacteristic.setValue(dataArray, 2);
+      //const unsigned char dataArray[2] = { (char) beeps, (char) ( ((beeps >> 8) & 0x7F) | (thresh ? 0x80 : 0x00) )};
+      //turnstyleBleIntCharacteristic.setValue(dataArray, 2);
+      BlePopulationCharacteristic.setValue(beeps);
+      BleOpenCharacteristic.setValue((int) thresh);
     }
   } else {
     digitalWrite(buzzerPin, LOW);//not pressed，then buzzer remains silent
