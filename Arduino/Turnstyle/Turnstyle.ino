@@ -28,10 +28,9 @@ Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
 
 // BLUETOOTH
 // UUIDs were randomly generated using https://www.uuidgenerator.net/
-BLEPeripheral blePeripheral;
-BLEService turnstyleBleService("468db76d-4b92-48a4-8727-426f9a4a2482");
+BLEService turnstyleService("468db76d-4b92-48a4-8727-426f9a4a2482");
 BLEUnsignedIntCharacteristic BlePopulationCharacteristic("d75b671b-6ea4-464e-89fd-1ab8ad76440b", BLERead | BLEWrite | BLENotify);
-BLEIntCharacteristic BleOpenCharacteristic("8404e92d-0ca7-480b-8b3f-7a1e4c8406f1", BLERead | BLENotify); // See https://github.com/01org/corelibs-arduino101/issues/554 for why we don't use BleBoolCharacteristic
+BLEUnsignedCharCharacteristic BleOpenCharacteristic("8404e92d-0ca7-480b-8b3f-7a1e4c8406f1", BLERead | BLENotify); // See https://github.com/01org/corelibs-arduino101/issues/554 for why we don't use BleBoolCharacteristic
 
 // MADGEWICK
 // see https://www.arduino.cc/en/Tutorial/Genuino101CurieIMUOrientationVisualiser
@@ -60,12 +59,16 @@ void setup() {
   Serial.begin(9600);
 
   // configure Bluetooth
-  blePeripheral.setLocalName("Turnstyle");
-  blePeripheral.setAdvertisedServiceUuid(turnstyleBleService.uuid());
-  blePeripheral.addAttribute(turnstyleBleService);
-  blePeripheral.addAttribute(BlePopulationCharacteristic);
-  blePeripheral.addAttribute(BleOpenCharacteristic);
-  blePeripheral.begin();
+  BLE.begin();
+  BLE.setLocalName("TSTYLE");
+  BLE.setAdvertisedService(turnstyleService);
+  turnstyleService.addCharacteristic(BlePopulationCharacteristic);
+  turnstyleService.addCharacteristic(BleOpenCharacteristic);
+  BLE.addService(turnstyleService);
+  BlePopulationCharacteristic.setValue(0);
+  BleOpenCharacteristic.setValue(0);
+  BLE.advertise();
+  
   printlnIfDebug("Bluetooth device active, waiting for connections...");
 
   // configure LCD
@@ -100,7 +103,7 @@ void setup() {
 
 void loop() {
   // listen for BLE peripherals to connect:
-  BLECentral central = blePeripheral.central();
+  BLEDevice central = BLE.central();
   // if a central is connected to peripheral:
   if (central) {
     printIfDebug("Connected to central: ");
@@ -220,7 +223,6 @@ void swapSonars() {
 }
 
 void updateBleCharacteristics() {
-  // const unsigned char dataArray[2] = { (char) population, (char) ( ((population >> 8) & 0x7F) | (isDoorOpen ? 0x80 : 0x00) )}; <- use this to merge the two characteristics
   BlePopulationCharacteristic.setValue(population);
   BleOpenCharacteristic.setValue(isDoorOpen);
 }

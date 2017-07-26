@@ -3,10 +3,9 @@
 
 rgb_lcd lcd;
 
-BLEPeripheral blePeripheral;
-BLEService turnstyleBleService("468db76d-4b92-48a4-8727-426f9a4a2482");
+BLEService turnstyleService("468db76d-4b92-48a4-8727-426f9a4a2482");
 BLEUnsignedIntCharacteristic BlePopulationCharacteristic("d75b671b-6ea4-464e-89fd-1ab8ad76440b", BLERead | BLEWrite | BLENotify);
-BLEIntCharacteristic BleOpenCharacteristic("8404e92d-0ca7-480b-8b3f-7a1e4c8406f1", BLERead | BLENotify); // See https://github.com/01org/corelibs-arduino101/issues/554 for why we don't use BleBoolCharacteristic
+BLEUnsignedCharCharacteristic BleOpenCharacteristic("8404e92d-0ca7-480b-8b3f-7a1e4c8406f1", BLERead | BLENotify); // See https://github.com/01org/corelibs-arduino101/issues/554 for why we don't use BleBoolCharacteristic
 
 int buttonPin = 4;
 int buzzerPin = 8;
@@ -16,12 +15,16 @@ boolean repLock = false; // prevents double counting
 
 void setup() {
   Serial.begin(9600);
-  blePeripheral.addAttribute(turnstyleBleService);
-  blePeripheral.addAttribute(BlePopulationCharacteristic);
-  blePeripheral.addAttribute(BleOpenCharacteristic);
-  blePeripheral.setAdvertisedServiceUuid(turnstyleBleService.uuid());
-  blePeripheral.setLocalName("Turnstyle");
-  blePeripheral.begin();
+  BLE.begin();
+  BLE.setLocalName("TSTYLE");
+  BLE.setAdvertisedService(turnstyleService);
+  turnstyleService.addCharacteristic(BlePopulationCharacteristic);
+  turnstyleService.addCharacteristic(BleOpenCharacteristic);
+  BLE.addService(turnstyleService);
+  BlePopulationCharacteristic.setValue(0);
+  BleOpenCharacteristic.setValue(0);
+  BLE.advertise();
+  
   Serial.println("Bluetooth device active, waiting for connections...");
 
   // configure LCD
@@ -36,7 +39,7 @@ void setup() {
 
 void loop() {
   // listen for BLE peripherals to connect:
-  BLECentral central = blePeripheral.central();
+  BLEDevice central = BLE.central();
   // if a central is connected to peripheral:
   if (central) {
     Serial.print("Connected to central: ");
