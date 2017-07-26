@@ -136,7 +136,7 @@ void loopHelper(boolean connected) {  // The code in this function is basically 
         baselineYaw = currentYaw;
         switchClosedLastIteration = false;
       }
-      float doorAngle = abs(currentYaw - baselineYaw);
+      doorAngle = abs(currentYaw - baselineYaw);
       // if the doorAngle is > 180, it must be due to the discontinuity, assuming doors open to an angle of max 180 degrees.
       if (doorAngle > 180) {
         doorAngle = 360 - doorAngle;
