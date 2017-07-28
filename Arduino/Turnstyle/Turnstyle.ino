@@ -5,13 +5,13 @@
 #include <Adafruit_RGBLCDShield.h>
 #include <CurieBLE.h>
 
-#define TRIGGER_PIN_1  12  // Arduino pin tied to trigger pin on the first ultrasonic sensor.
-#define ECHO_PIN_1     11  // Arduino pin tied to echo pin on the first ultrasonic sensor.
-#define TRIGGER_PIN_2  10  // Arduino pin tied to trigger pin on the second ultrasonic sensor.
-#define ECHO_PIN_2     9   // Arduino pin tied to echo pin on the second ultrasonic sensor.
+#define TRIGGER_PIN_1  11  // Arduino pin tied to trigger pin on the first ultrasonic sensor.
+#define ECHO_PIN_1     12  // Arduino pin tied to echo pin on the first ultrasonic sensor.
+#define TRIGGER_PIN_2  9  // Arduino pin tied to trigger pin on the second ultrasonic sensor.
+#define ECHO_PIN_2     10   // Arduino pin tied to echo pin on the second ultrasonic sensor.
 #define SWITCH_PIN     A2  // Arduino pin tied to magnetic contact switch lead
 
-#define DETECTION_THRESH 25 // Distance cutoff for passing (< DETECTION_THRESH is considered to be a person in proximity)***
+#define DETECTION_THRESH 30 // Distance cutoff for passing (< DETECTION_THRESH is considered to be a person in proximity)***
 #define OPEN_ANGLE 20       // Angle where door is considered open***
 #define MAX_DISTANCE 200    // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
 
