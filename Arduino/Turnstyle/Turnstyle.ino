@@ -29,8 +29,12 @@ Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
 // BLUETOOTH
 // UUIDs were randomly generated using https://www.uuidgenerator.net/
 BLEService turnstyleService("468db76d-4b92-48a4-8727-426f9a4a2482");
-BLEUnsignedIntCharacteristic BlePopulationCharacteristic("d75b671b-6ea4-464e-89fd-1ab8ad76440b", BLERead | BLEWrite | BLENotify);
-BLEUnsignedCharCharacteristic BleOpenCharacteristic("8404e92d-0ca7-480b-8b3f-7a1e4c8406f1", BLERead | BLENotify); // See https://github.com/01org/corelibs-arduino101/issues/554 for why we don't use BleBoolCharacteristic
+BLEUnsignedIntCharacteristic BlePopulationCharacteristic("d75b671b-6ea4-464e-89fd-1ab8ad76440b", BLERead | BLEWrite | BLENotify | BLEIndicate);
+// See https://github.com/01org/corelibs-arduino101/issues/554 for why we don't use BleBoolCharacteristic
+BLEUnsignedCharCharacteristic BleOpenCharacteristic("8404e92d-0ca7-480b-8b3f-7a1e4c8406f1", BLERead | BLENotify | BLEIndicate);
+BLEUnsignedCharCharacteristic BleOrientationCharacteristic("4ac1aade-3086-4ca1-92e1-0de3a0076674", BLERead | BLENotify | BLEIndicate);
+BLEDescriptor BlePopulationDescriptor("0a61d834-ac49-48f5-b85e-414f6481fb72", "Population");
+BLEDescriptor BleOpenDescriptor("04f8476f-6769-4bf2-af37-c9524145f4e3", "Open");
 
 // MADGEWICK
 // see https://www.arduino.cc/en/Tutorial/Genuino101CurieIMUOrientationVisualiser
@@ -62,13 +66,17 @@ void setup() {
   BLE.begin();
   BLE.setLocalName("TSTYLE");
   BLE.setAdvertisedService(turnstyleService);
+  BlePopulationCharacteristic.addDescriptor(BlePopulationDescriptor);
   turnstyleService.addCharacteristic(BlePopulationCharacteristic);
+  BleOpenCharacteristic.addDescriptor(BleOpenDescriptor);
   turnstyleService.addCharacteristic(BleOpenCharacteristic);
+  turnstyleService.addCharacteristic(BleOrientationCharacteristic);
   BLE.addService(turnstyleService);
   BlePopulationCharacteristic.setValue(0);
   BleOpenCharacteristic.setValue(0);
+  // BleOrientationCharacteristic.setValue(1);
   BLE.advertise();
-  
+
   printlnIfDebug("Bluetooth device active, waiting for connections...");
 
   // configure LCD
@@ -128,6 +136,20 @@ void loopHelper(boolean connected) {  // The code in this function is basically 
   float doorAngle;
   int ping_1, ping_2;
   unsigned long microsNow;
+
+  if (connected) {
+    if (BlePopulationCharacteristic.written()) {
+      population = BlePopulationCharacteristic.value();
+      updatePopulation();
+    }
+//    if (BleOrientationCharacteristic.written()) {
+//      unsigned char val = BleOrientationCharacteristic.value();
+//      if ((val && !enterFromLeftToRight) || (!val && enterFromLeftToRight)) {
+//        swapSonars();
+//        enterFromLeftToRight = val;
+//      }
+//    }
+  }
 
   // check if it's time to read data and update the filter
   microsNow = micros();
@@ -224,7 +246,8 @@ void swapSonars() {
 
 void updateBleCharacteristics() {
   BlePopulationCharacteristic.setValue(population);
-  BleOpenCharacteristic.setValue(isDoorOpen);
+  BleOpenCharacteristic.setValue((unsigned char) isDoorOpen);
+  // BleOrientationCharacteristic.setValue((unsigned char) enterFromLeftToRight);
 }
 
 void incrementPopulation() {
