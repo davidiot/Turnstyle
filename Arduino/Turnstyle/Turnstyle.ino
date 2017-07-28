@@ -2,7 +2,6 @@
 #include <MadgwickAHRS.h>
 #include <NewPing.h>
 #include <Wire.h>
-#include <Adafruit_MCP23017.h>
 #include <Adafruit_RGBLCDShield.h>
 #include <CurieBLE.h>
 

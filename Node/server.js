@@ -15,11 +15,14 @@ var serialPort = require("serialport"),
     /*plotly = require('plotly')('flopper', 'PPJUQUYOOxeMVChHf8M9'),
     token_population = 'osmgrats43',
     token_populationChange = 'lsroxkkn18';*/
-    plotly = require('plotly')('Turnstyle', 'KNMJ7PkKpzFfuG48rBTP'),
+    /*plotly = require('plotly')('Turnstyle', 'KNMJ7PkKpzFfuG48rBTP'),
     token_population = 'v0f4shxnnd',
-    token_populationChange = '58npz14moq';
+    token_populationChange = '58npz14moq';*/
+    plotly = require('plotly')('jaysonjehsen', '2lYnavctzxRtxyjRo1CF'),
+    token_population = '6o2f0orr60',
+    token_populationChange = '4ot2p6dwhp';
 
-var portName = 'COM3';
+var portName = 'COM5';
 var buffer = "";
 var populationNumber = 0;
 var average = 0;
@@ -48,7 +51,7 @@ var sp = new serialPort(portName, {
 
 var population_initdata = [{x: [], y: [], stream: {token: token_population, maxpoints: 500}}];
 var population_layout = {
-    title: 'Time vs. Population',
+    title: 'Population vs Time',
     xaxis: {
         title: 'Time'
     },
