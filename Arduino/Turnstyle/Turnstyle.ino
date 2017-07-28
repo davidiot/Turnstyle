@@ -205,11 +205,6 @@ void loopHelper(boolean connected) {  // The code in this function is basically 
       printInfoIfDebug(doorAngle, ping_1, ping_2);
     }
 
-    // Only bother updating bluetooth data if a device is connected
-    if (connected) {
-      updateBleCharacteristics();
-    }
-
     // CURRENT CONTROL SCHEME: left and right buttons make the entering direction in the orientation specified by the button.
     // select buttons always toggles the orientation.
     uint8_t buttons = lcd.readButtons();
@@ -244,12 +239,6 @@ void swapSonars() {
   displayMessage(message);
 }
 
-void updateBleCharacteristics() {
-  BlePopulationCharacteristic.setValue(population);
-  BleOpenCharacteristic.setValue((unsigned char) isDoorOpen);
-  // BleOrientationCharacteristic.setValue((unsigned char) enterFromLeftToRight);
-}
-
 void incrementPopulation() {
   population++;
   updatePopulation();
@@ -267,6 +256,7 @@ void decrementPopulation() {
 void openDoor() { // only open the door if it wasn't already opened
   if (!isDoorOpen) {
     isDoorOpen = true;
+    BleOpenCharacteristic.setValue((unsigned char) isDoorOpen);
     printlnIfDebug("Door open");
   }
 }
@@ -274,12 +264,14 @@ void openDoor() { // only open the door if it wasn't already opened
 void closeDoor() { // only close the door if it wasn't already closed.
   if (isDoorOpen) {
     isDoorOpen = false;
+    BleOpenCharacteristic.setValue((unsigned char) isDoorOpen);
     printlnIfDebug("Door closed");
   }
 }
 
 // Update population
 void updatePopulation() {
+  BlePopulationCharacteristic.setValue(population);
   lcd.setCursor(12, 0);
   lcd.print("    ");
   lcd.setCursor(12, 0);
