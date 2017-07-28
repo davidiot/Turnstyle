@@ -44,7 +44,7 @@ Based on the
 		<!--<button class="menu" onclick=""><img src="ui/images/menu.svg" /></button>-->
 	</header>
 
-	<h1><center>Turnstyle</center></h1>
+	<h1 style="font-size:32px"><center>Turnstyle</center></h1>
 
 	<p id="info">Initializing...</p>
 
@@ -55,13 +55,18 @@ Based on the
 			<button id="disconnectedButton" class="red" onclick="app.connect('Connecting...')">DISCONNECTED</button>
 			<button id="connectedButton" class="green hidden" onclick="app.connect('Reconnecting...')">CONNECTED</button>
 		</div>
-
+		<br>
+		<center>
+			<div style="font-size:24px">Current Population:</div>
+			<div style="font-size:72px" id="population">0</div>
+		</center>
+		<br>
 		<div>
 			The door is currently <span class="red">CLOSED</span>.
 		</div>
 	</div>
 
-	<button class="green wide big" onclick="app.setPopulation(300)">LED ON</button>
+	<button class="green wide big" onclick="app.setPopulation(300)">Settings</button>
 
 	<script>
 	// Application object.
@@ -74,17 +79,13 @@ Based on the
 	app.setPopulation = function(population)
 	{
 		app.device && app.device.writeDataArray(new Uint16Array([population]), evothings.arduinoble.POPULATION_UUID);
-	}
+		document.getElementById('population').innerHTML = population;
+	};
 
 	app.showMessage = function(info)
 	{
 		document.getElementById('info').innerHTML = info
 	};
-
-	app.setConnectStatus = function(status) 
-	{
-		document.getElementById('info').innerHTML = info
-	}
 
 	// Called when BLE and other native functions are available.
 	app.onDeviceReady = function()
@@ -99,7 +100,7 @@ Based on the
 		app.showMessage(message);
 
 		evothings.arduinoble.connect(
-			'STYLE', // Advertised name of BLE device.
+			'TSTYLE', // Advertised name of BLE device.
 			function(device)
 			{
 				app.device = device;
