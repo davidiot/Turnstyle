@@ -101,7 +101,6 @@ evothings.arduinoble = {};
 				// Get services info.
 				internal.getServices(device, success, fail);
 				// intial reading
-				internal.initialRead();
 			},
 			function(errorCode)
 			{
@@ -121,6 +120,7 @@ evothings.arduinoble = {};
 			{
 				internal.addMethodsToDeviceObject(device);
 				internal.startCharacteristicNotification(device);
+				device.initialRead();
 				success(device);
 			},
 			function(errorCode)
@@ -128,20 +128,6 @@ evothings.arduinoble = {};
 				fail(errorCode);
 			});
 	};
-
-	internal.initialRead = function()
-	{
-		device.readCharacteristic(
-					evothings.ble.POPULATION_UUID,
-					function(data)
-					{
-						device.updatePopulation(data);
-					},
-					function(errorCode)
-					{
-						console.log('BLE readCharacteristic error: ' + errorCode);
-					});
-	}
 
 	/**
 	 * Add instance methods to the device object.
@@ -178,10 +164,43 @@ evothings.arduinoble = {};
 				});
 		};
 
+		device.initialRead = function()
+		{
+			// bad repeated code because these are undefined outside for some reason.
+			var POPULATION_UUID = 'd75b671b-6ea4-464e-89fd-1ab8ad76440b';
+			var OPEN_UUID = '8404e92d-0ca7-480b-8b3f-7a1e4c8406f1';
+			device.readCharacteristic(
+						POPULATION_UUID,
+						function(data)
+						{
+							device.updatePopulation(data);
+						},
+						function(errorCode)
+						{
+							console.log('BLE readCharacteristic error: ' + errorCode);
+						});
+			device.readCharacteristic(
+						OPEN_UUID,
+						function(data)
+						{
+							device.updateOpen(data);
+						},
+						function(errorCode)
+						{
+							console.log('BLE readCharacteristic error: ' + errorCode);
+						});
+		};
+
 		device.updatePopulation = function(data)
 		{
 			var population = new DataView(data).getUint16(0, true);
 			document.getElementById('population').innerHTML = population;
+		};
+
+		device.updateOpen = function(data)
+		{
+			var open = new DataView(data).getUint8(0, true);
+			document.getElementById('openOrClosed').innerHTML = open ? 'OPEN' : 'CLOSED';
 		};
 	};
 
@@ -245,7 +264,7 @@ evothings.arduinoble = {};
 			evothings.arduinoble.OPEN_UUID,
 			function(data)
 			{
-				console.log(new DataView(data).getUint8(0, true));
+				device.updateOpen(data);
 			},
 			function(errorCode)
 			{

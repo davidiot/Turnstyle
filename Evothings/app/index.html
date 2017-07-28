@@ -59,11 +59,11 @@ Based on the
 		<center>
 			<div style="font-size:24px">Current Population:</div>
 			<div style="font-size:72px" id="population">0</div>
-		</center>
-		<br>
 		<div>
-			The door is currently <span class="red">CLOSED</span>.
+			The door is currently <span id="openOrClosed">CLOSED</span>.
 		</div>
+		<br>
+		</center>
 	</div>
 
 	<button class="green wide big" onclick="app.setPopulation(300)">Settings</button>
@@ -90,7 +90,7 @@ Based on the
 	// Called when BLE and other native functions are available.
 	app.onDeviceReady = function()
 	{
-		app.connect('Connecting...')
+		app.connect('Connecting...');
 	};
 
 	app.connect = function(message)
