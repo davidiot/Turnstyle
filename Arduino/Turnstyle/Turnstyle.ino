@@ -18,7 +18,7 @@
 // ULTRASONIC -- settings match for blackboard-hardware V1.0
 NewPing sonar_1(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE);
 NewPing sonar_2(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE);
-NewPing closeSonar = sonar_1;                               // NewPing setup of closer sensor.
+NewPing closeSonar = sonar_1;                           d    // NewPing setup of closer sensor.
 NewPing farSonar = sonar_2;                                 // NewPing setup of farther sensor.
 boolean enterFromLeftToRight = true;                        // is leftToRight movement considered entering or vice-versa?
 
@@ -55,7 +55,7 @@ unsigned int population = 0;          // current population of the room
 unsigned long closeLastTime = 0, farLastTime = 0; // The last times a person was detected at the close and far sensors, respectively.  Note that 0 means the last detection never happened or happened too long ago.
 
 // FOR DEBUGGING -- SET TO FALSE TO USE WITH NODE SERVER
-boolean debug = true;
+boolean debug = false;
 
 // SETUP
 void setup() {
