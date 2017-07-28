@@ -32,6 +32,7 @@ void setup() {
   BLE.addService(turnstyleService);
   BlePopulationCharacteristic.setValue(0);
   BleOpenCharacteristic.setValue(0);
+  BleOrientationCharacteristic.setValue(1);
   BLE.advertise();
 
   Serial.println("Bluetooth device active, waiting for connections...");
@@ -86,7 +87,8 @@ void loopHelper(boolean connected) {
       //const unsigned char dataArray[2] = { (char) beeps, (char) ( ((beeps >> 8) & 0x7F) | (thresh ? 0x80 : 0x00) )};
       //turnstyleBleIntCharacteristic.setValue(dataArray, 2);
       BlePopulationCharacteristic.setValue(beeps);
-      BleOpenCharacteristic.setValue((int) thresh);
+      BleOpenCharacteristic.setValue((unsigned char) thresh);
+      BleOrientationCharacteristic.setValue((unsigned char) thresh);
     }
   } else {
     digitalWrite(buzzerPin, LOW);//not pressed，then buzzer remains silent
