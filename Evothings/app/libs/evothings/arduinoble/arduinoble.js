@@ -190,13 +190,14 @@ evothings.arduinoble = {};
 							console.log('BLE readCharacteristic error: ' + errorCode);
 						});
 			device.cap = 100;
+			device.alert = false;
 		};
 
 		device.checkPopulation = function()
 		{
-			var overflow = device.pop > device.cap;
+			var overflow = (parseInt(device.pop) > parseInt(device.cap));
 			if (overflow) {
-				alert("Maximum Occupancy Exceeded");
+				alert("WARNING: MAXIMUM OCCUPANCY EXCEEDED!");
 			}
 			document.getElementById('population').style.color = overflow ? 'Red' : 'Black';
 		};
@@ -214,6 +215,9 @@ evothings.arduinoble = {};
 		{
 			var open = new DataView(data).getUint8(0, true);
 			document.getElementById('openOrClosed').innerHTML = open ? 'OPEN' : 'CLOSED';
+			if (device.alert && open) {
+				alert("WARNING: POSSIBLE SECURITY BREACH!");
+			}
 		};
 	};
 

@@ -84,6 +84,9 @@ Based on the
 			Set Population:&nbsp<input id="popselect" type="number" name="population" min="0" max="100000" step="1" value="100">
 		</form>
 		<br>
+		<form>
+			Alert me if door opened:&nbsp<input id="alertselect" type="checkbox" name="alertme">
+		</form>
 		<center><button id="updateButton" class="green" onclick="app.updateSettings()">Update settings</button></center>
 	</div>
 
@@ -112,6 +115,7 @@ Based on the
 		
 		app.setCapacity(capacity);
 		app.setPopulation(population);
+		app.device.alert = document.getElementById('alertselect').checked;
 		app.showMessage("Successfully updated settings.");
 		app.toggleSettings();
 	};
@@ -129,7 +133,7 @@ Based on the
 		app.device.pop = population;
 		document.getElementById('population').innerHTML = population;
 		document.getElementById('popselect').value = population;
-		app.device.checkPopulation(population);
+		app.device.checkPopulation();
 	};
 
 	app.showMessage = function(info)
