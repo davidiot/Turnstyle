@@ -15,13 +15,9 @@ var serialPort = require("serialport"),
     /*plotly = require('plotly')('flopper', 'PPJUQUYOOxeMVChHf8M9'),
     token_population = 'osmgrats43',
     token_populationChange = 'lsroxkkn18';*/
-    /*plotly = require('plotly')('Turnstyle', 'KNMJ7PkKpzFfuG48rBTP'),
+    plotly = require('plotly')('Turnstyle', 'KNMJ7PkKpzFfuG48rBTP'),
     token_population = 'v0f4shxnnd',
-    token_populationChange = '58npz14moq';*/
-    plotly = require('plotly')('jasonliucollege', 'm7NT9mBexjbw6N9fqZZv'),
-    token_population = 'glytimg2zn',
-    token_populationChange = 'jvr3autgda';
-
+    token_populationChange = '58npz14moq';
 var portName = 'COM5';
 var buffer = "";
 var populationNumber = 0;
