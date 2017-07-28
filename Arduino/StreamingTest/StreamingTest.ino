@@ -4,14 +4,14 @@
 rgb_lcd lcd;
 
 BLEService turnstyleService("468db76d-4b92-48a4-8727-426f9a4a2482");
-BLEUnsignedIntCharacteristic BlePopulationCharacteristic("d75b671b-6ea4-464e-89fd-1ab8ad76440b", BLERead | BLEWrite | BLENotify);
+BLEUnsignedIntCharacteristic BlePopulationCharacteristic("d75b671b-6ea4-464e-89fd-1ab8ad76440b", BLERead | BLEWrite | BLENotify | BLEIndicate);
 
 // See https://github.com/01org/corelibs-arduino101/issues/554 for why we don't use BleBoolCharacteristic
-BLEUnsignedCharCharacteristic BleOpenCharacteristic("8404e92d-0ca7-480b-8b3f-7a1e4c8406f1", BLERead | BLENotify);
-BLEUnsignedCharCharacteristic BleOrientationCharacteristic("4ac1aade-3086-4ca1-92e1-0de3a0076674", BLERead | BLENotify);
+BLEUnsignedCharCharacteristic BleOpenCharacteristic("8404e92d-0ca7-480b-8b3f-7a1e4c8406f1", BLERead | BLENotify | BLEIndicate);
+BLEUnsignedCharCharacteristic BleOrientationCharacteristic("4ac1aade-3086-4ca1-92e1-0de3a0076674", BLERead | BLENotify | BLEIndicate);
 
-BLEDescriptor BlePopulationDescriptor("2902", "block");
-BLEDescriptor BleOpenDescriptor("2902", "block");
+BLEDescriptor BlePopulationDescriptor("0a61d834-ac49-48f5-b85e-414f6481fb72", "Population");
+BLEDescriptor BleOpenDescriptor("04f8476f-6769-4bf2-af37-c9524145f4e3", "Open");
 
 int buttonPin = 4;
 int buzzerPin = 8;
@@ -22,7 +22,7 @@ boolean repLock = false; // prevents double counting
 void setup() {
   Serial.begin(9600);
   BLE.begin();
-  BLE.setLocalName("STYLE");
+  BLE.setLocalName("TSTYLE");
   BLE.setAdvertisedService(turnstyleService);
   BlePopulationCharacteristic.addDescriptor(BlePopulationDescriptor);
   turnstyleService.addCharacteristic(BlePopulationCharacteristic);
