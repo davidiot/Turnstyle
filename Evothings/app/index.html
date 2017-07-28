@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<!--
+Based on the 
+-->
+<head>
+
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, user-scalable=no
+		initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+
+	<title>Turnstyle</title>
+
+	<style>
+		@import 'ui/css/evothings-app.css';
+	</style>
+
+	<script>
+	// Redirect console.log to Evothings Workbench.
+	if (window.hyper && window.hyper.log) { console.log = hyper.log }
+	window.onerror = function(msg, url, line)
+	{
+		console.log(msg + ": " + url + ":" + line);
+	};
+	</script>
+
+	<script src="cordova.js"></script>
+	<script src="libs/jquery/jquery.js"></script>
+	<script src="libs/evothings/evothings.js"></script>
+	<script src="libs/evothings/ui/ui.js"></script>
+	<script src="libs/evothings/arduinoble/arduinoble.js"></script>
+
+</head>
+
+<body ontouchstart=""><!-- ontouchstart="" enables low-delay CSS transitions. -->
+
+	<header>
+		<button class="back" onclick="history.back()">
+			<img src="ui/images/arrow-left.svg" />
+		</button>
+
+		<img class="logotype" src="ui/images/logo.svg" alt="Evothings" />
+
+		<!--<button class="menu" onclick=""><img src="ui/images/menu.svg" /></button>-->
+	</header>
+
+	<h1><center>Turnstyle</center></h1>
+
+	<p id="info">Initializing...</p>
+
+	<div style="font-size:16px">
+
+		<div>
+			status:&nbsp
+			<button id="disconnectedButton" class="red" onclick="app.connect('Connecting...')">DISCONNECTED</button>
+			<button id="connectedButton" class="green hidden" onclick="app.connect('Reconnecting...')">CONNECTED</button>
+		</div>
+
+		<div>
+			The door is currently <span class="red">CLOSED</span>.
+		</div>
+	</div>
+
+	<button class="green wide big" onclick="app.setPopulation(300)">LED ON</button>
+
+	<script>
+	// Application object.
+	var app = {}
+
+	// Connected device.
+	app.device = null;
+
+	// Set population
+	app.setPopulation = function(population)
+	{
+		app.device && app.device.writeDataArray(new Uint16Array([population]), evothings.arduinoble.POPULATION_UUID);
+	}
+
+	app.showMessage = function(info)
+	{
+		document.getElementById('info').innerHTML = info
+	};
+
+	app.setConnectStatus = function(status) 
+	{
+		document.getElementById('info').innerHTML = info
+	}
+
+	// Called when BLE and other native functions are available.
+	app.onDeviceReady = function()
+	{
+		app.connect('Connecting...')
+	};
+
+	app.connect = function(message)
+	{
+		evothings.arduinoble.close();
+		
+		app.showMessage(message);
+
+		evothings.arduinoble.connect(
+			'STYLE', // Advertised name of BLE device.
+			function(device)
+			{
+				app.device = device;
+				document.getElementById('disconnectedButton').classList.add('hidden')
+				document.getElementById('connectedButton').classList.remove('hidden')
+				app.showMessage('Connected!  Welcome to Turnstyle.');
+			},
+			function(errorCode)
+			{
+				document.getElementById('connectedButton').classList.add('hidden')
+				document.getElementById('disconnectedButton').classList.remove('hidden')
+				app.showMessage('Touch the status button to reconnect.');
+			});
+	};
+
+	document.addEventListener(
+		'deviceready',
+		function() { evothings.scriptsLoaded(app.onDeviceReady) },
+		false);
+	</script>
+
+</body>
+
+</html>
