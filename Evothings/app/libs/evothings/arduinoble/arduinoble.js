@@ -17,12 +17,21 @@ evothings.loadScript('libs/evothings/easyble/easyble.js');
  * @todo Add function to set the write characteristic UUID to make
  * the code more generic.
  */
+
 evothings.arduinoble = {};
 
 ;(function()
 {
 	// Internal functions.
 	var internal = {};
+
+	// UUIDs
+	evothings.arduinoble.SERVICE_UUID = '468db76d-4b92-48a4-8727-426f9a4a2482';
+	evothings.arduinoble.POPULATION_UUID = 'd75b671b-6ea4-464e-89fd-1ab8ad76440b';
+	evothings.arduinoble.OPEN_UUID = '8404e92d-0ca7-480b-8b3f-7a1e4c8406f1';
+	evothings.arduinoble.ORIENTATION_UUID = '4ac1aade-3086-4ca1-92e1-0de3a0076674';
+	evothings.arduinoble.POPULATION_DESCRIPTOR = '00002902-0000-1000-8000-00805f9b34fb';
+	evothings.arduinoble.OPEN_DESCRIPTOR = '00002902-0000-1000-8000-00805f9b34fb';
 
 	/**
 	 * Stop any ongoing scan and disconnect all devices.
@@ -109,6 +118,7 @@ evothings.arduinoble = {};
 			function(device)
 			{
 				internal.addMethodsToDeviceObject(device);
+				internal.startCharacteristicNotification(device);
 				success(device);
 			},
 			function(errorCode)
@@ -131,7 +141,7 @@ evothings.arduinoble = {};
 		/**
 		 * @function writeDataArray
 		 * @description Write data to an Arduino BLE shield.
-		 * @param {Uint8Array} uint8array - The data to be written.
+		 * @param uint8array - The data to be written.
 		 * @memberof evothings.arduinoble.ArduinoBLEDevice
 		 * @instance
 		 * @public
@@ -152,4 +162,72 @@ evothings.arduinoble = {};
 				});
 		};
 	};
+
+	/**
+	 * Read characteristic data.  - added by David
+	 */
+	internal.startCharacteristicNotification = function(device)
+	{
+		// Set characteristic notifications to ON.
+		device.writeDescriptor(
+			evothings.arduinoble.POPULATION_UUID,
+			evothings.arduinoble.POPULATION_DESCRIPTOR, // Notification descriptor.
+			new Uint8Array([1,0]),
+			function()
+			{
+				console.log('Status: writeDescriptor ok.');
+			},
+			function(errorCode)
+			{
+				// This error will happen on iOS, since this descriptor is not
+				// listed when requesting descriptors. On iOS you are not allowed
+				// to use the configuration descriptor explicitly. It should be
+				// safe to ignore this error.
+				console.log('Error: writeDescriptor: ' + errorCode + '.');
+			});
+
+		device.writeDescriptor(
+			evothings.arduinoble.OPEN_UUID,
+			evothings.arduinoble.OPEN_DESCRIPTOR, // Notification descriptor.
+			new Uint8Array([1,0]),
+			function()
+			{
+				console.log('Status: writeDescriptor ok.');
+			},
+			function(errorCode)
+			{
+				// This error will happen on iOS, since this descriptor is not
+				// listed when requesting descriptors. On iOS you are not allowed
+				// to use the configuration descriptor explicitly. It should be
+				// safe to ignore this error.
+				console.log('Error: writeDescriptor: ' + errorCode + '.');
+			});
+		
+		
+		// Start population notifications.
+		device.enableNotification(
+			evothings.arduinoble.POPULATION_UUID,
+			function(data)
+			{
+				console.log(data);
+			},
+			function(errorCode)
+			{
+				console.log('Error: enableNotification: ' + errorCode + '.');
+			});
+		
+		
+		// Start open/close notifications.
+		device.enableNotification(
+			evothings.arduinoble.OPEN_UUID,
+			function(data)
+			{
+				console.log(data);
+			},
+			function(errorCode)
+			{
+				console.log('Error: enableNotification: ' + errorCode + '.');
+			});
+	};
+
 })();

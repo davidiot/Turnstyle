@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html>
 <!--
-This is an app that demonstrates how to control an Arduino101 board
-using BLE (Bluetooth Low Energy).
+Based on the 
 -->
 <head>
 
@@ -49,15 +48,20 @@ using BLE (Bluetooth Low Energy).
 
 	<p id="info">Initializing...</p>
 
-	<button class="yellow wide" onclick="app.connect()">CONNECT</button>
+	<div style="font-size:16px">
 
-	<br />
+		<div>
+			status:&nbsp
+			<button id="disconnectedButton" class="red" onclick="app.connect('Connecting...')">DISCONNECTED</button>
+			<button id="connectedButton" class="green hidden" onclick="app.connect('Reconnecting...')">CONNECTED</button>
+		</div>
 
-	<button class="green wide big" onclick="app.ledOn()">LED ON</button>
+		<div>
+			The door is currently <span class="red">CLOSED</span>.
+		</div>
+	</div>
 
-	<br />
-
-	<button class="red wide big" onclick="app.ledOff()">LED OFF</button>
+	<button class="green wide big" onclick="app.setPopulation(300)">LED ON</button>
 
 	<script>
 	// Application object.
@@ -66,16 +70,10 @@ using BLE (Bluetooth Low Energy).
 	// Connected device.
 	app.device = null;
 
-	// Turn on LED.
-	app.ledOn = function()
+	// Set population
+	app.setPopulation = function(population)
 	{
-		app.device && app.device.writeDataArray(new Uint8Array([1]), '19b10001-e8f2-537e-4f6c-d104768a1214');
-	}
-
-	// Turn off LED.
-	app.ledOff = function()
-	{
-		app.device && app.device.writeDataArray(new Uint8Array([0]), '19b10001-e8f2-537e-4f6c-d104768a1214');
+		app.device && app.device.writeDataArray(new Uint16Array([population]), evothings.arduinoble.POPULATION_UUID);
 	}
 
 	app.showMessage = function(info)
@@ -83,28 +81,37 @@ using BLE (Bluetooth Low Energy).
 		document.getElementById('info').innerHTML = info
 	};
 
+	app.setConnectStatus = function(status) 
+	{
+		document.getElementById('info').innerHTML = info
+	}
+
 	// Called when BLE and other native functions are available.
 	app.onDeviceReady = function()
 	{
-		app.showMessage('Touch the connect button to begin.');
+		app.connect('Connecting...')
 	};
 
-	app.connect = function()
+	app.connect = function(message)
 	{
 		evothings.arduinoble.close();
 		
-		app.showMessage('Connecting...');
+		app.showMessage(message);
 
 		evothings.arduinoble.connect(
-			'LED', // Advertised name of BLE device.
+			'STYLE', // Advertised name of BLE device.
 			function(device)
 			{
 				app.device = device;
-				app.showMessage('Connected! Touch buttons to turn LED on/off.');
+				document.getElementById('disconnectedButton').classList.add('hidden')
+				document.getElementById('connectedButton').classList.remove('hidden')
+				app.showMessage('Connected!  Welcome to Turnstyle.');
 			},
 			function(errorCode)
 			{
-				app.showMessage('Connect error: ' + errorCode + '.');
+				document.getElementById('connectedButton').classList.add('hidden')
+				document.getElementById('disconnectedButton').classList.remove('hidden')
+				app.showMessage('Touch the status button to reconnect.');
 			});
 	};
 
