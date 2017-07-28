@@ -189,12 +189,25 @@ evothings.arduinoble = {};
 						{
 							console.log('BLE readCharacteristic error: ' + errorCode);
 						});
+			device.cap = 100;
+		};
+
+		device.checkPopulation = function()
+		{
+			var overflow = device.pop > device.cap;
+			if (overflow) {
+				alert("Maximum Occupancy Exceeded");
+			}
+			document.getElementById('population').style.color = overflow ? 'Red' : 'Black';
 		};
 
 		device.updatePopulation = function(data)
 		{
 			var population = new DataView(data).getUint16(0, true);
+			device.pop = population;
 			document.getElementById('population').innerHTML = population;
+			document.getElementById('popselect').value = population;
+			device.checkPopulation(population);
 		};
 
 		device.updateOpen = function(data)

@@ -62,17 +62,32 @@ Based on the
 			<div style="font-size:24px">Current Population:</div>
 			<div style="font-size:72px" id="population">0</div>
 		<div>
+			Maximum occupancy: <span id="capacity-display">100</span>
+		</div>
+		<div>
 			The door is currently <span id="openOrClosed">CLOSED</span>.
 		</div>
-		<br>
 		</center>
+		<br>
 	</div>
 
 		<center>
 			<a href="https://plot.ly/~flopper/4/untitled-dashboard/"><button class="yellow">Analytics <i class="fa fa-bar-chart-o"></i></button></a>
-			<button onclick="app.setPopulation(300)">Settings <i class="fa fa-cogs"></i></button>
+			<button onclick="app.toggleSettings()">Settings <i class="fa fa-cogs"></i></button>
 		</center>
-		
+	<div id="settings" style="font-size:16px;text-align:justify;display:none">
+		<form>
+			Set Capacity:&nbsp<input type="number" name="capacity" min="0" max="100000" step="1" value="100">
+		</form>
+		<br>
+		<form>
+			Set Population:&nbsp<input id="popselect" type="number" name="population" min="0" max="100000" step="1" value="100">
+		</form>
+		<br>
+		<center><button id="updateButton" class="green" onclick="app.updateSettings()">Update settings</button></center>
+	</div>
+
+
 	<script>
 	// Application object.
 	var app = {}
@@ -80,10 +95,37 @@ Based on the
 	// Connected device.
 	app.device = null;
 
+	app.toggleSettings = function() 
+	{
+		var x = document.getElementById('settings');
+		if (x.style.display === 'none') {
+			x.style.display = 'block';
+		} else {
+			x.style.display = 'none';
+		}
+	}
+
+	app.updateSettings = function()
+	{
+		var population = document.getElementById('popselect').value;
+		var capacity = document.getElementById('capacity').value;
+		if (confirm("Set capacity to " + capacity + " and population to " + population + "?") == true) {
+			app.setCapacity(capacity);
+			app.setPopulation(population);
+		}
+	};
+
+	app.setCapacity = function(capacity)
+	{
+		app.device.cap = capacity;
+		document.getElementById('capacity-display').innerHTML = capacity;
+	};
+
 	// Set population
 	app.setPopulation = function(population)
 	{
 		app.device && app.device.writeDataArray(new Uint16Array([population]), evothings.arduinoble.POPULATION_UUID);
+		app.device.pop = population;
 		document.getElementById('population').innerHTML = population;
 	};
 
