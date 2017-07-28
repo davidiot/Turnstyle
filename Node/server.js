@@ -18,9 +18,9 @@ var serialPort = require("serialport"),
     /*plotly = require('plotly')('Turnstyle', 'KNMJ7PkKpzFfuG48rBTP'),
     token_population = 'v0f4shxnnd',
     token_populationChange = '58npz14moq';*/
-    plotly = require('plotly')('jaysonjehsen', '2lYnavctzxRtxyjRo1CF'),
-    token_population = '6o2f0orr60',
-    token_populationChange = '4ot2p6dwhp';
+    plotly = require('plotly')('jasonliucollege', 'm7NT9mBexjbw6N9fqZZv'),
+    token_population = 'glytimg2zn',
+    token_populationChange = 'jvr3autgda';
 
 var portName = 'COM5';
 var buffer = "";
