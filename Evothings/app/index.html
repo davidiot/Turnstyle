@@ -72,12 +72,12 @@ Based on the
 	</div>
 
 		<center>
-			<a href="https://plot.ly/~flopper/4/untitled-dashboard/"><button class="yellow">Analytics <i class="fa fa-bar-chart-o"></i></button></a>
+			<a href="https://plot.ly/dashboard/Turnstyle:4"><button class="yellow">Analytics <i class="fa fa-bar-chart-o"></i></button></a>
 			<button onclick="app.toggleSettings()">Settings <i class="fa fa-cogs"></i></button>
 		</center>
 	<div id="settings" style="font-size:16px;text-align:justify;display:none">
 		<form>
-			Set Capacity:&nbsp<input type="number" name="capacity" min="0" max="100000" step="1" value="100">
+			Set Capacity:&nbsp<input id="capselect" type="number" name="capacity" min="0" max="100000" step="1" value="100">
 		</form>
 		<br>
 		<form>
@@ -107,12 +107,13 @@ Based on the
 
 	app.updateSettings = function()
 	{
+		var capacity = document.getElementById('capselect').value;
 		var population = document.getElementById('popselect').value;
-		var capacity = document.getElementById('capacity').value;
-		if (confirm("Set capacity to " + capacity + " and population to " + population + "?") == true) {
-			app.setCapacity(capacity);
-			app.setPopulation(population);
-		}
+		
+		app.setCapacity(capacity);
+		app.setPopulation(population);
+		app.showMessage("Successfully updated settings.");
+		app.toggleSettings();
 	};
 
 	app.setCapacity = function(capacity)
@@ -127,6 +128,8 @@ Based on the
 		app.device && app.device.writeDataArray(new Uint16Array([population]), evothings.arduinoble.POPULATION_UUID);
 		app.device.pop = population;
 		document.getElementById('population').innerHTML = population;
+		document.getElementById('popselect').value = population;
+		app.device.checkPopulation(population);
 	};
 
 	app.showMessage = function(info)

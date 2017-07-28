@@ -207,7 +207,7 @@ evothings.arduinoble = {};
 			device.pop = population;
 			document.getElementById('population').innerHTML = population;
 			document.getElementById('popselect').value = population;
-			device.checkPopulation(population);
+			device.checkPopulation();
 		};
 
 		device.updateOpen = function(data)
