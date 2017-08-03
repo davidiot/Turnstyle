@@ -59,3 +59,5 @@ Submitted by David Zhou, Daniel Zhou, and Jason Liu
     + The Set Population field allows the user to manually adjust the population (this is for demo purposes and also allows the unit to be installed in a room with people already in it)
     + The Alert Me checkbox allows the user to turn on security features after business hours.
 + An alert is displayed if the security features are enabled and the door is opened.
+
+#### Update 8/3/2017: We've now included an ```.apk``` file built with Evothings Studio for easier testing on Android devices.  It can be found in the root directory.  Unfortunately, iOS users will stiil have to follow the steps described above.
